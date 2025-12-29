@@ -316,6 +316,7 @@ export default function App() {
             const aiMsg = {
                 role: 'assistant',
                 content: response.content,
+                attachments: response.attachments || [],
                 metadata: {
                     latency: endTime - startTime,
                     tokens: response.usage?.total_tokens || 0,

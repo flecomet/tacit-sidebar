@@ -118,19 +118,32 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         }
 
         let content = data.choices[0].message.content || '';
+        const attachments = [];
 
         // Handle "Nano Banana" style images (OpenRouter specific)
         if (data.choices[0].message.images) {
             data.choices[0].message.images.forEach(img => {
                 const imgUrl = img.image_url?.url || img.url;
                 if (imgUrl) {
-                    content += `\n\n![Generated Image](${imgUrl})`;
+                    // Fix Duplicate Image Bug:
+                    // Only append to markdown if it's NOT already there
+                    if (!content.includes(imgUrl)) {
+                        content += `\n\n![Generated Image](${imgUrl})`;
+                    }
+
+                    // Add to attachments for High-Res download UI
+                    attachments.push({
+                        type: 'image',
+                        url: imgUrl,
+                        name: 'generated_image.png'
+                    });
                 }
             });
         }
 
         return {
             content: content,
+            attachments: attachments,
             usage: data.usage || { total_tokens: 0 }
         };
     },
@@ -157,6 +170,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             m.files.forEach(f => {
                 if (f.type === 'image') {
                     // data:image/png;base64,.....
+                    // Use 'content' which is now the Compressed/Low-Res version
                     const [meta, base64] = f.content.split(',');
                     const mediaType = meta.split(':')[1].split(';')[0];
 

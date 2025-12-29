@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, Download, Image as ImageIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -108,6 +108,33 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
                                 {m.content}
                             </ReactMarkdown>
                         </div>
+
+                        {/* Attachments Section (Generated Images) */}
+                        {m.attachments && m.attachments.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {m.attachments.map((att, idx) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-black/40 border border-brand-border rounded-md pl-2 pr-1 py-1 text-xs">
+                                        <div
+                                            className="flex items-center gap-1.5 text-gray-300 cursor-pointer hover:text-white"
+                                            onClick={() => onViewFile && onViewFile(att)}
+                                        >
+                                            {att.type === 'image' ? <ImageIcon size={14} className="text-brand-cyan" /> : <FileText size={14} className="text-gray-500" />}
+                                            <span className="truncate max-w-[150px]">{att.name || `Image ${idx + 1}`}</span>
+                                        </div>
+                                        <div className="h-3 w-[1px] bg-white/10 mx-1"></div>
+                                        <a
+                                            href={att.url || att.content}
+                                            download={att.name || `generated_${idx}.png`}
+                                            className="p-1 hover:bg-white/10 rounded-md text-gray-400 hover:text-white transition-colors"
+                                            title="Download High-Res"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <Download size={14} />
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         {m.role === 'assistant' && m.metadata && (
                             <div className="mt-3 pt-2.5 border-t border-brand-border/40 flex items-center gap-3 text-[10px] text-gray-500 font-mono opacity-80">
                                 {m.metadata.tokens > 0 && (

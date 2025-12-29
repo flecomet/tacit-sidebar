@@ -24,7 +24,7 @@ export default function DocViewerModal({ file, onClose }) {
                             {file.name}
                         </h2>
                         <span className="text-xs text-gray-500 shrink-0 ml-2">
-                            {(file.content.length / 1024).toFixed(1)} KB
+                            {file.content ? (file.content.length / 1024).toFixed(1) + ' KB' : ''}
                         </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -42,7 +42,7 @@ export default function DocViewerModal({ file, onClose }) {
                 <div className="flex-1 overflow-auto p-0 bg-[#131314]">
                     {file.type === 'image' ? (
                         <div className="w-full h-full flex items-center justify-center p-4">
-                            <img src={file.content} alt={file.name} className="max-w-full max-h-full object-contain" />
+                            <img src={file.url || file.content} alt={file.name} className="max-w-full max-h-full object-contain" />
                         </div>
                     ) : (
                         <pre className="p-4 font-mono text-xs md:text-sm text-gray-300 whitespace-pre-wrap break-words">

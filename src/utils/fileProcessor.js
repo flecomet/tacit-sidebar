@@ -17,13 +17,22 @@ export const processFile = async (file) => {
     try {
         let content = "";
 
+
         // 1. Handle Images (Vision model support)
         if (fileType.startsWith('image/')) {
-            content = await readFileAsBase64(file);
+            // Process image:
+            // 1. Get original base64 for download/display (High Res)
+            // 2. Get compressed base64 for LLM context (Low Res)
+
+            const originalBase64 = await readFileAsBase64(file);
+            const compressedBase64 = await compressImage(originalBase64, 1024, 0.7);
+
             return {
                 type: 'image',
                 name: fileName,
-                content: content
+                content: compressedBase64, // Used for LLM Context
+                originalContent: originalBase64, // Used for Download/Display High Res
+                mimeType: fileType
             };
         }
 
@@ -74,6 +83,43 @@ const readFileAsBase64 = (file) => {
         reader.onload = () => resolve(reader.result);
         reader.onerror = () => reject(new Error("Failed to read image file"));
         reader.readAsDataURL(file);
+    });
+};
+
+/**
+ * Resizes and compresses an image base64 string.
+ * @param {string} base64 - Original image base64
+ * @param {number} maxWidth - Maximum width/height
+ * @param {number} quality - JPEG quality (0-1)
+ * @returns {Promise<string>} - Compressed base64
+ */
+const compressImage = (base64, maxWidth = 1024, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth || height > maxWidth) {
+                if (width > height) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                } else {
+                    width = Math.round((width * maxWidth) / height);
+                    height = maxWidth;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = (e) => reject(e);
+        img.src = base64;
     });
 };
 
