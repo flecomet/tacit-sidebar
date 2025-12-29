@@ -9,8 +9,11 @@
 <br />
 
 <div align="center">
-<!-- REPLACE THIS WITH A GIF OF THE EXTENSION IN ACTION -->
-<img src="https://www.google.com/search?q=https://via.placeholder.com/800x400%3Ftext%3DDemo%2BGIF:%2BOpening%2BTacit%2Band%2BSummarizing%2Ba%2BPage" alt="Tacit Demo" width="100%" />
+  <img src="assets/screenshots/yahoo_finance.png" alt="Chat Interface" width="45%" />
+  <img src="assets/screenshots/monstera_png_pdf.png" alt="Vision Capabilities" width="45%" />
+  <br/>
+  <img src="assets/screenshots/wikipedia_infographics.png" alt="Context Awareness" width="45%" />
+  <img src="assets/screenshots/model_selection.png" alt="Model Selection" width="45%" />
 </div>
 
 <br />
