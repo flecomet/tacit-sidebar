@@ -1,0 +1,62 @@
+{
+    "manifest_version": 3,
+    "name": "Tacit",
+    "version": "1.0.0",
+    "description": "Privacy-first AI sidebar. Zero data collection.",
+    "permissions": [
+        "sidePanel",
+        "storage",
+        "activeTab",
+        "scripting",
+        "commands",
+        "unlimitedStorage",
+        "declarativeNetRequest"
+    ],
+    "host_permissions": [
+        "https://openrouter.ai/*",
+        "https://api.openai.com/*",
+        "https://api.anthropic.com/*",
+        "https://generativelanguage.googleapis.com/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "http://localhost:11434/*",
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "assets/background.js"
+    },
+    "side_panel": {
+        "default_path": "src/sidepanel/index.html"
+    },
+    "icons": {
+        "16": "favicon.png",
+        "48": "favicon.png",
+        "128": "favicon.png"
+    },
+    "action": {
+        "default_title": "Open Tacit",
+        "default_icon": "favicon.png"
+    },
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Alt+J",
+                "mac": "Alt+J"
+            },
+            "description": "Toggle Side Panel"
+        }
+    },
+    "content_security_policy": {
+        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://openrouter.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com http://localhost:* http://127.0.0.1:* data:; img-src 'self' https: data: blob: http://localhost:* http://127.0.0.1:*;"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "pdf.worker.min.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}

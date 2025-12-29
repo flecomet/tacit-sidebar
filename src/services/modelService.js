@@ -1,0 +1,172 @@
+/**
+ * Service to interact with cloud providers APIs for model lists
+ */
+export const fetchModels = async (customBaseUrl, includeFreeModels = false, provider = 'openrouter', apiKey = '') => {
+    try {
+        let models = [];
+        const cleanProvider = (provider || 'openrouter').toLowerCase().trim();
+
+        // --- Anthropic (Dynamic API) ---
+        if (cleanProvider === 'anthropic') {
+            const baseUrl = 'https://api.anthropic.com/v1';
+
+            if (!apiKey) return [];
+
+            const response = await fetch(`${baseUrl}/models`, {
+                headers: {
+                    "x-api-key": apiKey,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json"
+                }
+            });
+
+            if (!response.ok) throw new Error(`Anthropic API Error: ${response.status}`);
+
+            const data = await response.json();
+
+            // Map the response to our format
+            models = (data.data || []).map(m => ({
+                id: m.id,
+                name: m.display_name || m.id
+            }));
+
+            // Categorization logic for 2025 models
+            return models.map(m => ({
+                ...m,
+                _category: m.id.includes('haiku') ? 'Small' : 'Performance'
+            }));
+        }
+
+        // --- Google (Generative Language API) ---
+        if (cleanProvider === 'google') {
+            const baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+            if (!apiKey) return [];
+
+            const response = await fetch(`${baseUrl}/models?key=${apiKey}`);
+            if (!response.ok) throw new Error(`Google API Error: ${response.status}`);
+
+            const data = await response.json();
+            // Google returns models with "name": "models/gemini-pro"
+            // We want id: "gemini-pro"
+            models = (data.models || [])
+                .filter(m => m.name.includes('gemini'))
+                .map(m => ({
+                    id: m.name.replace('models/', ''),
+                    name: m.displayName || m.name
+                }));
+            return models.map(m => ({ ...m, _category: m.id.includes('flash') || m.id.includes('nano') ? 'Small' : 'Performance' }));
+        }
+
+        // --- OpenAI (Direct) ---
+        if (cleanProvider === 'openai') {
+            const baseUrl = 'https://api.openai.com/v1';
+            if (!apiKey) return [];
+
+            const response = await fetch(`${baseUrl}/models`, {
+                headers: { "Authorization": `Bearer ${apiKey}` }
+            });
+
+            if (!response.ok) throw new Error(`OpenAI API Error: ${response.status}`);
+
+            const data = await response.json();
+            models = (data.data || [])
+                .filter(m => m.id.includes('gpt')) // Filter for GPT models roughly
+                .map(m => ({ id: m.id, name: m.id }));
+
+            return models.map(m => ({ ...m, _category: m.id.includes('gpt-4') ? 'Performance' : 'Small' }));
+        }
+
+
+        // --- OpenRouter / Local (Ollama/LM Studio) ---
+        // Explicitly check for 'openrouter' or 'local'. If unknown, default to openrouter logic but logs might be useful.
+        const isLocal = cleanProvider === 'local';
+
+        // If the provider is unknown and not 'local', we treat it as OpenRouter (compatibility),
+        // but we should proceed with caution.
+
+        const baseUrl = customBaseUrl ? customBaseUrl.replace(/\/$/, '') : 'https://openrouter.ai/api/v1';
+
+        const headers = {};
+        if (apiKey) {
+            headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+
+        const response = await fetch(`${baseUrl}/models`, {
+            headers: headers
+        });
+
+        if (!response.ok) {
+            // Enhanced error message
+            throw new Error(`Failed to fetch models from ${baseUrl} (${cleanProvider}): ${response.status} ${response.statusText}`);
+        }
+
+        const text = await response.text();
+        if (!text) throw new Error('Empty response from model provider');
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error(`Failed to parse model list: ${text.slice(0, 100)}...`);
+        }
+        models = data.data || [];
+
+        // If local, we tag them and skip the "free" filter because local models
+        // don't have the same "free" semantics (they are free but private).
+        if (isLocal) {
+            return models.map(m => ({ ...m, _category: 'Local' }));
+        }
+
+        // Filter free models if not included (Only for OpenRouter)
+        if (!includeFreeModels && cleanProvider === 'openrouter') {
+            models = models.filter(model => {
+                const isFree = model.pricing &&
+                    (String(model.pricing.prompt) === "0") &&
+                    (String(model.pricing.completion) === "0");
+                return !isFree;
+            });
+        }
+
+        return models;
+    } catch (error) {
+        console.error("Model fetch error:", error.message || "Unknown error");
+        throw error;
+    }
+};
+
+export const getModelCategory = (model) => {
+    // Explicit tag from fetchModels (e.g. Local)
+    if (model._category) return model._category;
+
+    // Check if free (pricing is usually string "0" or number 0)
+    // OpenRouter model object usually has `pricing` object with `prompt` and `completion`.
+    const isFree = model.pricing && (model.pricing.prompt === "0" || model.pricing.prompt === 0)
+        && (model.pricing.completion === "0" || model.pricing.completion === 0);
+
+    if (isFree) return 'Free';
+
+    const id = model.id.toLowerCase();
+    const name = (model.name || '').toLowerCase();
+
+    // Specific check for Gemini Pro to ensure it hits Performance
+    // "gemini" contains "mini", so we need to be careful
+    if (id.includes('gemini') && id.includes('pro')) {
+        return 'Performance';
+    }
+
+    // Light/Small models
+    // Exclude 'gemini' here because of the 'mini' substring match issue if we used 'mini'
+    // But 'mini' IS in the list.
+    const smallKeywords = ['7b', '8b', 'phi', 'gemma', 'haiku', 'flash', 'micro', 'mini', 'turbo'];
+
+    if (smallKeywords.some(k => {
+        // Special case: if keyword is 'mini' and model is 'gemini', ignore unless it's 'gemini-mini' (doesn't exist)
+        if (k === 'mini' && id.includes('gemini') && !id.includes('mini-')) return false;
+        return id.includes(k) || name.includes(k);
+    })) {
+        return 'Small';
+    }
+
+    // Default to Performance
+    return 'Performance';
+};
