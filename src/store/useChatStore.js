@@ -40,9 +40,7 @@ export const useChatStore = create(
             // Favorites
             favorites: [],
 
-            // Draft
-            draft: '',
-            setDraft: (text) => set({ draft: text }),
+
 
             customBaseUrl: '', // For Custom Cloud compliant servers
             setCustomBaseUrl: (url) => set({ customBaseUrl: url }),
@@ -209,7 +207,7 @@ export const useChatStore = create(
                 sessions: state.sessions,
                 currentSessionId: state.currentSessionId,
                 favorites: state.favorites,
-                draft: state.draft,
+
                 customBaseUrl: state.customBaseUrl,
                 includeFreeModels: state.includeFreeModels,
                 providerMode: state.providerMode,

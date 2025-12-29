@@ -2,11 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import ChatInput from './ChatInput';
 import { useChatStore } from '../store/useChatStore';
+import { useDraftStore } from '../store/useDraftStore';
 import * as modelService from '../services/modelService';
 
 // Mock the store
 vi.mock('../store/useChatStore', () => ({
     useChatStore: vi.fn(),
+}));
+
+vi.mock('../store/useDraftStore', () => ({
+    useDraftStore: vi.fn(),
 }));
 
 // Mock model service
@@ -35,6 +40,10 @@ describe('ChatInput Component', () => {
             ],
             favorites: [],
             toggleFavorite: vi.fn(),
+            // draft moved to separate store
+        });
+
+        useDraftStore.mockReturnValue({
             draft: '',
             setDraft: vi.fn()
         });
@@ -82,8 +91,6 @@ describe('ChatInput Component', () => {
             ],
             favorites: [],
             toggleFavorite: vi.fn(),
-            draft: '',
-            setDraft: vi.fn()
         });
 
         rerender(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
@@ -204,8 +211,6 @@ describe('ChatInput Component', () => {
             ],
             favorites: [],
             toggleFavorite: toggleFavoriteMock,
-            draft: '',
-            setDraft: vi.fn()
         });
 
         render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
@@ -241,8 +246,6 @@ describe('ChatInput Component', () => {
             ],
             favorites: [],
             toggleFavorite: toggleFavoriteMock,
-            draft: '',
-            setDraft: vi.fn()
         });
 
         render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
@@ -314,8 +317,6 @@ describe('ChatInput Component', () => {
             ],
             favorites: [],
             toggleFavorite: vi.fn(),
-            draft: '',
-            setDraft: vi.fn()
         });
 
         // Force rerender
@@ -327,9 +328,11 @@ describe('ChatInput Component', () => {
 
     it('should clear input if onSend returns true', async () => {
         const setDraftMock = vi.fn();
-        useChatStore.mockReturnValue({
+        useDraftStore.mockReturnValue({
             draft: 'Hello world',
-            setDraft: setDraftMock,
+            setDraft: setDraftMock
+        });
+        useChatStore.mockReturnValue({
             availableModels: [],
             favorites: []
         });
@@ -348,9 +351,11 @@ describe('ChatInput Component', () => {
 
     it('should NOT clear input if onSend returns false', async () => {
         const setDraftMock = vi.fn();
-        useChatStore.mockReturnValue({
+        useDraftStore.mockReturnValue({
             draft: 'Hello world',
-            setDraft: setDraftMock,
+            setDraft: setDraftMock
+        });
+        useChatStore.mockReturnValue({
             availableModels: [],
             favorites: []
         });
@@ -365,5 +370,37 @@ describe('ChatInput Component', () => {
             expect(onSendMock).toHaveBeenCalledWith('Hello world');
             expect(setDraftMock).not.toHaveBeenCalledWith('');
         });
+    });
+
+    it('should not allow sending when disabled (isLoading)', () => {
+        const setDraftMock = vi.fn();
+        useDraftStore.mockReturnValue({
+            draft: 'Hello',
+            setDraft: setDraftMock
+        });
+
+        const onSendMock = vi.fn();
+        render(<ChatInput onSend={onSendMock} disabled={true} />);
+
+        const sendButton = screen.getByLabelText('Send');
+        fireEvent.click(sendButton);
+
+        expect(onSendMock).not.toHaveBeenCalled();
+    });
+
+    it('should prevent double submission on Enter key if disabled', () => {
+        const setDraftMock = vi.fn();
+        useDraftStore.mockReturnValue({
+            draft: 'Hello',
+            setDraft: setDraftMock
+        });
+
+        const onSendMock = vi.fn();
+        render(<ChatInput onSend={onSendMock} disabled={true} />);
+
+        const textarea = screen.getByRole('textbox');
+        fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
+
+        expect(onSendMock).not.toHaveBeenCalled();
     });
 });

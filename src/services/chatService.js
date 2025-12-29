@@ -57,7 +57,16 @@ export const chatService = {
                 }
             });
 
-            return { role: m.role, content: contentParts };
+            // Filter out empty text blocks (unless it is the only block)
+            const finalContent = contentParts.filter(part => {
+                if (part.type === 'text') {
+                    // Keep if text is not empty OR if it's the only part (to allow empty message if really needed, though rare)
+                    return part.text.trim().length > 0 || contentParts.length === 1;
+                }
+                return true;
+            });
+
+            return { role: m.role, content: finalContent };
         });
 
         const headers = {

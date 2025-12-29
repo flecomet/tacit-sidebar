@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Paperclip, FileDown, ChevronDown, Star, Plus, Minus } from 'lucide-react';
 import { useChatStore } from '../store/useChatStore';
+import { useDraftStore } from '../store/useDraftStore';
 import { getModelCategory } from '../services/modelService';
 
 export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
     const {
         model, setModel, availableModels, favorites, toggleFavorite,
-        draft, setDraft
     } = useChatStore();
+    const { draft, setDraft } = useDraftStore();
 
     // Use draft from store instead of local state
     const input = draft;
@@ -44,6 +45,7 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
+            if (disabled) return;
             e.preventDefault();
             handleSend();
         }
