@@ -5,11 +5,16 @@ import remarkGfm from 'remark-gfm';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 export default function MessageList({ messages, isLoading, onViewFile }) {
-    const endRef = useRef(null);
+    const containerRef = useRef(null);
 
     // Auto-scroll to bottom
     useEffect(() => {
-        endRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (containerRef.current) {
+            containerRef.current.scrollTo({
+                top: containerRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
     }, [messages, isLoading]);
 
     if (messages.length === 0 && !isLoading) {
@@ -23,7 +28,7 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-5">
             {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                     <div
@@ -171,7 +176,7 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
                 </div>
             )}
 
-            <div ref={endRef} className="h-4" />
+            <div className="h-4" />
         </div>
     );
 }

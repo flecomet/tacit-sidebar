@@ -336,7 +336,7 @@ export default function App() {
 
     return (
         <div
-            className="flex flex-col h-screen bg-brand-dark text-gray-100 font-sans relative"
+            className="flex flex-col h-full bg-brand-dark text-gray-100 font-sans relative overflow-hidden"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
