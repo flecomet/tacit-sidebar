@@ -9,7 +9,8 @@ export default {
     theme: {
         extend: {
             colors: {
-                brand: colors.brand
+                brand: colors.brand,
+                gray: colors.gray // Override default gray with our tinted scale
             }
         },
     },
