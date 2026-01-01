@@ -1,8 +1,34 @@
-import React, { useEffect, useRef } from 'react';
-import { FileText, Download, Image as ImageIcon } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { FileText, Download, Image as ImageIcon, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+
+const CopyButton = ({ text, className, iconSize = 14, label = "Copy" }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async (e) => {
+        e.stopPropagation();
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            className={`p-1.5 hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-white ${className}`}
+            title="Copy to clipboard"
+            aria-label={label}
+        >
+            {copied ? <Check size={iconSize} className="text-green-400" /> : <Copy size={iconSize} />}
+        </button>
+    );
+};
 
 export default function MessageList({ messages, isLoading, onViewFile }) {
     const containerRef = useRef(null);
@@ -30,7 +56,15 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
     return (
         <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-5">
             {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                <div key={i} className={`group flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+
+                    {/* Copy Button for User (Left side) */}
+                    {m.role === 'user' && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity self-center mr-2 shrink-0">
+                            <CopyButton text={m.content} label="Copy message" />
+                        </div>
+                    )}
+
                     <div
                         className={`max-w-[88%] p-3.5 rounded-2xl text-[13px] leading-relaxed shadow-sm transition-all duration-200 ${m.role === 'user'
                             ? 'bg-brand-cyan/10 text-white border border-brand-cyan/20 rounded-tr-none' // User bubble
@@ -85,13 +119,19 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
                                     code({ node, inline, className, children, ...props }) {
                                         const match = /language-(\w+)/.exec(className || '')
                                         return !inline && match ? (
-                                            <div className="rounded-lg bg-black/40 p-3 my-3 overflow-x-auto border border-brand-border text-xs font-mono shadow-inner group relative">
-                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] uppercase text-gray-500 font-bold px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
-                                                    {match[1]}
+                                            <div className="my-3 border border-brand-border rounded-lg bg-black/40 overflow-hidden relative group/code shadow-inner">
+                                                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover/code:opacity-100 transition-opacity flex items-center gap-2 bg-brand-card/90 backdrop-blur-md border border-brand-border/50 rounded-md p-0.5 shadow-sm">
+                                                    <div className="text-[10px] uppercase text-gray-500 font-bold px-1.5 select-none">
+                                                        {match[1]}
+                                                    </div>
+                                                    <div className="w-[1px] h-3 bg-brand-border/50"></div>
+                                                    <CopyButton text={String(children).replace(/\n$/, '')} label="Copy code" className="!p-1" />
                                                 </div>
-                                                <code className={className} {...props}>
-                                                    {children}
-                                                </code>
+                                                <div className="overflow-x-auto p-3 pt-4">
+                                                    <code className={`${className} block min-w-max`} {...props}>
+                                                        {children}
+                                                    </code>
+                                                </div>
                                             </div>
                                         ) : (
                                             <code className="bg-white/10 rounded px-1.5 py-0.5 text-[11px] font-mono text-brand-cyan/90" {...props}>
@@ -160,6 +200,13 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
                             </div>
                         )}
                     </div>
+
+                    {/* Copy Button for Assistant (Right side) */}
+                    {m.role === 'assistant' && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity self-center ml-2 shrink-0">
+                            <CopyButton text={m.content} label="Copy message" />
+                        </div>
+                    )}
                 </div>
             ))}
 
