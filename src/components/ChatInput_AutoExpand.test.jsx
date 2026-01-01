@@ -103,6 +103,9 @@ describe('ChatInput AutoExpand', () => {
         });
         window.ResizeObserver = resizeObserverMock;
 
+        // Mock requestAnimationFrame to be synchronous for this test
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+
         useDraftStore.mockReturnValue({
             draft: 'content',
             setDraft: vi.fn()

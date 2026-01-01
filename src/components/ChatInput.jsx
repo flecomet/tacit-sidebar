@@ -198,7 +198,10 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
                 // Only adjust height if width has changed to avoid loops/unnecessary updates
                 if (entry.contentRect.width !== lastWidth) {
                     lastWidth = entry.contentRect.width;
-                    adjustHeight();
+                    // Wrap in requestAnimationFrame to avoid "ResizeObserver loop completed with undelivered notifications"
+                    window.requestAnimationFrame(() => {
+                        adjustHeight();
+                    });
                 }
             }
         });
