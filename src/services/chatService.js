@@ -150,6 +150,22 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             });
         }
 
+        // Fallback: Scan content for markdown images to ensure all images are in attachments
+        // This handles cases where models (like Nano Banana 3 Pro with reasoning) 
+        // put images directly in content but don't populate the 'images' array.
+        const markdownImageRegex = /!\[.*?\]\((.*?)\)/g;
+        let match;
+        while ((match = markdownImageRegex.exec(content)) !== null) {
+            const url = match[1];
+            if (!attachments.some(a => a.url === url)) {
+                attachments.push({
+                    type: 'image',
+                    url: url,
+                    name: 'generated_image.png'
+                });
+            }
+        }
+
         return {
             content: content,
             attachments: attachments,
