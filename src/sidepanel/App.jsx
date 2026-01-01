@@ -186,6 +186,8 @@ export default function App() {
 
     // Fetch models on mount or when settings change
     useEffect(() => {
+        let isActive = true;
+
         const loadModels = async () => {
             const isLocal = providerMode === 'local';
             const provider = isLocal ? 'local' : activeCloudProvider;
@@ -204,14 +206,15 @@ export default function App() {
             }
 
             try {
+                // Check active status before fetch to avoid unnecessary calls if already unmounted/changed
+                if (!isActive) return;
+
                 // fetchModels now accepts provider
                 const models = await fetchModels(urlToUse, includeFreeModels, provider, apiKey);
-                console.log("Models fetched:", models?.length);
 
-                // Race condition check
-                const currentIsLocal = useChatStore.getState().providerMode === 'local';
-                const currentProvider = useChatStore.getState().activeCloudProvider;
-                if ((currentIsLocal !== isLocal) || (!isLocal && currentProvider !== activeCloudProvider)) return;
+                if (!isActive) return;
+
+                console.log("Models fetched:", models?.length);
 
                 setAvailableModels(models);
 
@@ -219,16 +222,22 @@ export default function App() {
                 const currentModel = useChatStore.getState().model;
                 const isCurrentValid = models.some(m => m.id === currentModel);
 
+                // If current model is invalid according to new list, switch to first available
                 if (!isCurrentValid && models.length > 0) {
                     setModel(models[0].id);
                 }
             } catch (err) {
+                if (!isActive) return;
                 console.error("Failed to fetch models:", err);
                 setAvailableModels([]);
             }
         };
 
         loadModels();
+
+        return () => {
+            isActive = false;
+        };
     }, [customBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, encryptedApiKeys, setAvailableModels, setModel]);
 
     const handleSend = async (text) => {

@@ -68,6 +68,7 @@ if (typeof FileReader === 'undefined') {
 
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
+Element.prototype.scrollTo = vi.fn();
 
 // Polyfill Web Crypto API with manual mock for stability in JSDOM
 const mockCrypto = {
