@@ -170,6 +170,17 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
         ? ".pdf,.txt,.js,.md,.json,.ts,.py,.png,.jpg,.jpeg,.webp"
         : ".pdf,.txt,.js,.md,.json,.ts,.py";
 
+    const textareaRef = useRef(null);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+    }, [input]);
+
     return (
         <div className="p-4 bg-brand-dark border-t border-brand-border flex flex-col gap-2">
             <div className="flex gap-2 items-end">
@@ -348,11 +359,12 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
 
                 {/* Text Input */}
                 <textarea
+                    ref={textareaRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Ask..."
-                    className="flex-1 resize-none bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan max-h-32 min-h-[40px] placeholder-gray-500"
+                    className="flex-1 resize-none bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan max-h-[160px] min-h-[40px] placeholder-gray-500 overflow-y-auto"
                     rows={1}
                 />
 
