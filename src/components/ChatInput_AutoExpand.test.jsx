@@ -87,11 +87,50 @@ describe('ChatInput AutoExpand', () => {
         const textarea = screen.getByRole('textbox');
 
         const computedStyle = window.getComputedStyle(textarea);
-        // We implemented max-h-[160px] class, which corresponds to max-height: 160px in css
-        // But testing library doesn't parse tailwind classes into computed styles unless we have full css setup.
-        // However, we can check if the class is present or check computed style if JSDOM supports it.
-        // Usually JSDOM doesn't compute layout styles from classes unless we use a library for it.
-        // So checking the class name inclusion is arguably better for unit test here.
         expect(textarea.className).toContain('max-h-[160px]');
+    });
+
+    it('should adjust height on resize events', () => {
+        // Mock ResizeObserver
+        let resizeCallback;
+        const resizeObserverMock = vi.fn((callback) => {
+            resizeCallback = callback;
+            return {
+                observe: vi.fn(),
+                unobserve: vi.fn(),
+                disconnect: vi.fn(),
+            };
+        });
+        window.ResizeObserver = resizeObserverMock;
+
+        useDraftStore.mockReturnValue({
+            draft: 'content',
+            setDraft: vi.fn()
+        });
+
+        render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+        const textarea = screen.getByRole('textbox');
+
+        // Initial height check logic relies on useEffect, which sets it to scrollHeight
+        // Let's change scrollHeight to simulate a layout change (e.g. width got smaller, so text wraps and height grows)
+        Object.defineProperty(textarea, 'scrollHeight', { configurable: true, value: 50 });
+
+        // Sanity check: verify ResizeObserver was instantiated
+        expect(resizeObserverMock).toHaveBeenCalled();
+
+        // Trigger the resize callback
+        // ResizeObserver callback receives entries
+        if (resizeCallback) {
+            resizeCallback([{
+                target: textarea,
+                contentRect: { width: 100 }
+            }]);
+        }
+
+        // The height should now be updated to the new scrollHeight (50)
+        expect(textarea.style.height).toBe('50px');
+
+        // Cleanup
+        delete window.ResizeObserver;
     });
 });

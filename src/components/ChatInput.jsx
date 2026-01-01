@@ -173,13 +173,39 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
     const textareaRef = useRef(null);
 
     // Auto-resize textarea
-    useEffect(() => {
+    const adjustHeight = () => {
         const textarea = textareaRef.current;
         if (textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = `${textarea.scrollHeight}px`;
         }
+    };
+
+    // Trigger resize on input change
+    useEffect(() => {
+        adjustHeight();
     }, [input]);
+
+    // Trigger resize on layout width change
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea || !window.ResizeObserver) return;
+
+        let lastWidth = textarea.clientWidth;
+
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                // Only adjust height if width has changed to avoid loops/unnecessary updates
+                if (entry.contentRect.width !== lastWidth) {
+                    lastWidth = entry.contentRect.width;
+                    adjustHeight();
+                }
+            }
+        });
+
+        observer.observe(textarea);
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <div className="p-4 bg-brand-dark border-t border-brand-border flex flex-col gap-2">
