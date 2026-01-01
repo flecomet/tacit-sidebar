@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Tacit",
+    "name": "Tacit: Privacy-First AI Sidebar (OpenRouter, Local, OpenAI, Claude, Gemini)",
     "version": "1.0.0",
-    "description": "Privacy-first AI sidebar. Zero data collection.",
+    "description": "Zero-tracking AI assistant. Chat with GPT, Claude, Gemini, or local models without subscription.",
     "permissions": [
         "sidePanel",
         "storage",
