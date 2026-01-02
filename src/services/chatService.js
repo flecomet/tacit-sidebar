@@ -83,14 +83,22 @@ export const chatService = {
             headers["Authorization"] = `Bearer ${apiKey}`;
         }
 
+        const { webSearch, ...otherOptions } = options;
+
+        const payload = {
+            model: model,
+            messages: formattedMessages,
+            ...otherOptions
+        };
+
+        if (provider === 'openrouter' && webSearch) {
+            payload.plugins = [{ id: "web" }];
+        }
+
         const response = await fetch(url, {
             method: "POST",
             headers,
-            body: JSON.stringify({
-                model: model,
-                messages: formattedMessages,
-                ...options
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {

@@ -240,9 +240,10 @@ export default function App() {
         };
     }, [customBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, encryptedApiKeys, setAvailableModels, setModel]);
 
-    const handleSend = async (text) => {
+    const handleSend = async (text, options = {}) => {
         const isLocal = providerMode === 'local';
         const provider = isLocal ? 'local' : activeCloudProvider;
+        const { webSearch } = options;
         let apiKey = '';
 
         if (!isLocal) {
@@ -304,7 +305,7 @@ export default function App() {
                 apiKey: apiKey,
                 model: model,
                 messages: messages.concat(userMsg),
-                options: {} // can add temperature etc here
+                options: { ...options } // Pass webSearch and others
             });
 
             const endTime = Date.now();

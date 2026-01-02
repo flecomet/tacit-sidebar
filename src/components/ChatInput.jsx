@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, FileDown, ChevronDown, Star, Plus, Minus } from 'lucide-react';
+import { Send, Paperclip, FileDown, ChevronDown, Star, Plus, Minus, Globe } from 'lucide-react';
 import { useChatStore } from '../store/useChatStore';
 import { useDraftStore } from '../store/useDraftStore';
 import { getModelCategory } from '../services/modelService';
@@ -20,6 +20,7 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isModelListHovered, setIsModelListHovered] = useState(false);
     const [collapsedGroups, setCollapsedGroups] = useState([]);
+    const [webSearchEnabled, setWebSearchEnabled] = useState(false);
     const inputRef = useRef(null);
 
     // Sync input with current model text (Name or ID) whenever model changes
@@ -37,7 +38,7 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
 
     const handleSend = async () => {
         if (!input.trim()) return;
-        const success = await onSend(input);
+        const success = await onSend(input, { webSearch: webSearchEnabled });
         if (success) {
             setInput('');
         }
@@ -238,6 +239,19 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
                 >
                     <FileDown size={20} />
                 </button>
+
+                {/* Web Search Toggle (OpenRouter Only) */}
+                {activeProvider === 'openrouter' && (
+                    <button
+                        onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+                        disabled={disabled}
+                        className={`p-2 cursor-pointer transition-colors flex items-center gap-1 ${webSearchEnabled ? 'text-brand-cyan hover:text-cyan-400' : 'text-gray-400 hover:text-gray-200 disabled:text-gray-600'}`}
+                        title={webSearchEnabled ? "Disable Web Search" : "Enable Web Search"}
+                        aria-label={webSearchEnabled ? "Disable Web Search" : "Enable Web Search"}
+                    >
+                        <Globe size={20} />
+                    </button>
+                )}
 
                 {/* Model Switcher */}
                 <div
