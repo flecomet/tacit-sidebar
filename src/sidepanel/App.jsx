@@ -312,7 +312,13 @@ export default function App() {
 
             // Calculate Metrics
             let cost = 0;
-            if (activeModelData?.pricing) {
+
+            // 1. Prefer Provider's reported cost (OpenRouter)
+            if (response.usage?.cost) {
+                cost = parseFloat(response.usage.cost);
+            }
+            // 2. Fallback to local estimation
+            else if (activeModelData?.pricing) {
                 const { prompt, completion } = activeModelData.pricing;
                 const inputTokens = response.usage?.prompt_tokens || response.usage?.input_tokens || 0;
                 const outputTokens = response.usage?.completion_tokens || response.usage?.output_tokens || 0;

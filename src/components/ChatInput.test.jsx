@@ -344,7 +344,7 @@ describe('ChatInput Component', () => {
         fireEvent.click(sendBtn);
 
         await waitFor(() => {
-            expect(onSendMock).toHaveBeenCalledWith('Hello world');
+            expect(onSendMock).toHaveBeenCalledWith('Hello world', { webSearch: false });
             expect(setDraftMock).toHaveBeenCalledWith('');
         });
     });
@@ -367,7 +367,7 @@ describe('ChatInput Component', () => {
         fireEvent.click(sendBtn);
 
         await waitFor(() => {
-            expect(onSendMock).toHaveBeenCalledWith('Hello world');
+            expect(onSendMock).toHaveBeenCalledWith('Hello world', { webSearch: false });
             expect(setDraftMock).not.toHaveBeenCalledWith('');
         });
     });

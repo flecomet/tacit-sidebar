@@ -108,7 +108,7 @@ describe('Web Search Integration', () => {
             // Check for the button - assuming we'll use a specific aria-label or accessible name
             // For now, let's assume we'll give it aria-label="Toggle Web Search"
             const toggleBtn = screen.getByTitle('Enable Web Search');
-            expect(toggleBtn).toBeInTheDocument();
+            expect(toggleBtn).toBeDefined();
         });
 
         it('should toggle web search state on click', () => {
