@@ -70,10 +70,37 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
 
             const data = await response.json();
             models = (data.data || [])
-                .filter(m => m.id.includes('gpt')) // Filter for GPT models roughly
+                .filter(m => m.id.includes('gpt') || m.id.includes('o1')) // Filter for GPT or o1 models
                 .map(m => ({ id: m.id, name: m.id }));
 
-            return models.map(m => ({ ...m, _category: m.id.includes('gpt-4') ? 'Performance' : 'Small' }));
+            // Apply sorting logic to OpenAI provider too
+            models.sort((a, b) => {
+                const idA = a.id.toLowerCase();
+                const idB = b.id.toLowerCase();
+
+                // Priority: o1 > GPT-5 > GPT-4.5 > GPT-4o > GPT-4
+                const getScore = (id) => {
+                    if (id.includes('o1-')) return 110; // o1 preview/mini
+                    if (id.includes('gpt-5') || id.includes('chatgpt-5')) return 100;
+                    if (id.includes('gpt-4.5')) return 90;
+                    if (id.includes('gpt-4o')) return 80;
+                    if (id.includes('gpt-4') && !id.includes('mini')) return 70;
+                    if (id.includes('gpt-4')) return 60; // minis etc
+                    return 0;
+                };
+
+                const scoreA = getScore(idA);
+                const scoreB = getScore(idB);
+
+                if (scoreA !== scoreB) {
+                    return scoreB - scoreA; // Descending score
+                }
+
+                // Alphabetical as tie breaker
+                return idA.localeCompare(idB);
+            });
+
+            return models.map(m => ({ ...m, _category: m.id.includes('gpt-4') || m.id.includes('o1') ? 'Performance' : 'Small' }));
         }
 
 
@@ -116,6 +143,37 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
         if (isLocal) {
             return models.map(m => ({ ...m, _category: 'Local' }));
         }
+
+        // Custom Sorting: Prioritize GPT-5 / ChatGPT-5
+        models.sort((a, b) => {
+            const idA = a.id.toLowerCase();
+            const idB = b.id.toLowerCase();
+
+            // Extract version numbers for GPT models
+            const getGptScore = (id) => {
+                if (id.includes('o1-')) return 110;
+                if (id.includes('gpt-5') || id.includes('chatgpt-5')) return 100;
+                if (id.includes('gpt-4.5')) return 90;
+                if (id.includes('gpt-4o')) return 80; // Optimized
+                if (id.includes('gpt-4') && !id.includes('mini')) return 70;
+                if (id.includes('gpt-4')) return 60;
+
+                // Claude
+                if (id.includes('claude-3.5')) return 55;
+                if (id.includes('claude-3')) return 50;
+
+                return 0;
+            };
+
+            const scoreA = getGptScore(idA);
+            const scoreB = getGptScore(idB);
+
+            if (scoreA !== scoreB) {
+                return scoreB - scoreA;
+            }
+
+            return idA.localeCompare(idB);
+        });
 
         // Filter free models if not included (Only for OpenRouter)
         if (!includeFreeModels && cleanProvider === 'openrouter') {

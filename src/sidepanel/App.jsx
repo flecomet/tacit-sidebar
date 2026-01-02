@@ -28,7 +28,7 @@ export default function App() {
 
     // Local UI state
     const [showSettings, setShowSettings] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingSessionIds, setLoadingSessionIds] = useState([]); // Track loading state per session
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [attachments, setAttachments] = useState([]);
 
@@ -37,6 +37,10 @@ export default function App() {
     const [tempLocalUrl, setTempLocalUrl] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [viewingFile, setViewingFile] = useState(null);
+
+    // Derived loading state for current view
+    const currentSessionId = useChatStore(state => state.currentSessionId);
+    const isCurrentSessionLoading = loadingSessionIds.includes(currentSessionId);
 
     // Initialize session
     useEffect(() => {
@@ -259,7 +263,9 @@ export default function App() {
             }
         }
 
-        setIsLoading(true);
+        // Capture session ID *before* async operation so we lock the correct session
+        const initiatingSessionId = useChatStore.getState().currentSessionId;
+        setLoadingSessionIds(prev => [...prev, initiatingSessionId]);
 
         try {
             // 1. Check Payload Requirements (Vision)
@@ -284,7 +290,12 @@ export default function App() {
 
             // 2. Add User Message (Optimistic UI)
             const userMsg = { role: 'user', content: text, files: attachments };
+
+            // We use addMessage for the user message to ensure it appears immediately
+            // But we should really use addMessageToSession to be safe, though addMessage defaults to valid current.
+            // Let's stick to addMessage for the user interaction trigger (synchronous-ish)
             addMessage(userMsg);
+
             setAttachments([]);
 
             // 3. Prepare Service Call
@@ -339,14 +350,17 @@ export default function App() {
                     cost: cost
                 }
             };
-            addMessage(aiMsg);
+
+            // Target the specific session that initiated the request
+            useChatStore.getState().addMessageToSession(initiatingSessionId, aiMsg);
+
             return true;
 
         } catch (err) {
             addMessage({ role: 'system', content: `Error: ${err.message}` });
             return false;
         } finally {
-            setIsLoading(false);
+            setLoadingSessionIds(prev => prev.filter(id => id !== initiatingSessionId));
         }
     };
 
@@ -582,7 +596,7 @@ export default function App() {
             {/* Message List */}
             <MessageList
                 messages={messages}
-                isLoading={isLoading}
+                isLoading={isCurrentSessionLoading}
                 onViewFile={setViewingFile}
             />
 
@@ -612,8 +626,8 @@ export default function App() {
                 onSend={handleSend}
                 onUpload={handleFileUpload}
                 onReadPage={handleReadPage}
-                isLoading={isLoading}
-                disabled={isLoading}
+                isLoading={isCurrentSessionLoading}
+                disabled={isCurrentSessionLoading}
                 providerMode={providerMode}
                 activeProvider={providerMode === 'local' ? 'Local' : activeCloudProvider}
             />

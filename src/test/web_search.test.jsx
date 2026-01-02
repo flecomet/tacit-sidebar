@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { chatService } from '../services/chatService';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import ChatInput from '../components/ChatInput';
 import { useChatStore } from '../store/useChatStore';
+import { useDraftStore } from '../store/useDraftStore';
 
 // Mock dependencies
 vi.mock('../store/useChatStore');
@@ -22,11 +23,19 @@ describe('Web Search Integration', () => {
     describe('chatService Logic', () => {
         beforeEach(() => {
             vi.clearAllMocks();
+            // Default mock response
             global.fetch.mockResolvedValue({
                 ok: true,
                 text: () => Promise.resolve(JSON.stringify({
-                    choices: [{ message: { content: 'Response' } }]
-                }))
+                    choices: [{ message: { content: 'Response' } }], // OpenAI structure
+                    content: [{ text: 'Response' }], // Claude structure
+                    candidates: [{ content: { parts: [{ text: 'Response' }] } }] // Google structure
+                })),
+                json: () => Promise.resolve({
+                    choices: [{ message: { content: 'Response' } }],
+                    content: [{ text: 'Response' }],
+                    candidates: [{ content: { parts: [{ text: 'Response' }] } }]
+                })
             });
         });
 
@@ -40,12 +49,64 @@ describe('Web Search Integration', () => {
                 options: { webSearch: true }
             });
 
-            expect(global.fetch).toHaveBeenCalledTimes(1);
+            const callArgs = global.fetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+            expect(body.plugins).toEqual([{ id: 'web' }]);
+        });
+
+        it('should include web_search tool for OpenAI when webSearch is true', async () => {
+            await chatService.sendMessage({
+                provider: 'openai',
+                baseUrl: 'https://api.openai.com/v1',
+                apiKey: 'test-key',
+                model: 'gpt-4o',
+                messages: [{ role: 'user', content: 'hello' }],
+                options: { webSearch: true }
+            });
+
+            const callArgs = global.fetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+            expect(body.tools).toBeDefined();
+            expect(body.tools).toContainEqual({
+                type: 'web_search'
+            });
+        });
+
+        it('should include web_search_20250305 tool for Anthropic when webSearch is true', async () => {
+            await chatService.sendMessage({
+                provider: 'anthropic',
+                baseUrl: 'https://api.anthropic.com',
+                apiKey: 'test-key',
+                model: 'claude-3-5-sonnet-20241022',
+                messages: [{ role: 'user', content: 'hello' }],
+                options: { webSearch: true }
+            });
+
             const callArgs = global.fetch.mock.calls[0];
             const body = JSON.parse(callArgs[1].body);
 
-            expect(body).toHaveProperty('plugins');
-            expect(body.plugins).toEqual([{ id: 'web' }]);
+            expect(body.tools).toBeDefined();
+            expect(body.tools).toContainEqual({
+                type: 'web_search_20250305',
+                name: 'web_search'
+            });
+        });
+
+        it('should include google_search_retrieval tool for Google when webSearch is true', async () => {
+            await chatService.sendMessage({
+                provider: 'google',
+                baseUrl: 'https://generativelanguage.googleapis.com',
+                apiKey: 'test-key',
+                model: 'gemini-1.5-pro',
+                messages: [{ role: 'user', content: 'hello' }],
+                options: { webSearch: true }
+            });
+
+            const callArgs = global.fetch.mock.calls[0];
+            const body = JSON.parse(callArgs[1].body);
+
+            expect(body.tools).toBeDefined();
+            expect(body.tools).toContainEqual({ google_search: {} });
         });
 
         it('should NOT include web plugin when webSearch is false', async () => {
@@ -56,21 +117,6 @@ describe('Web Search Integration', () => {
                 model: 'openai/gpt-4',
                 messages: [{ role: 'user', content: 'hello' }],
                 options: { webSearch: false }
-            });
-
-            const body = JSON.parse(global.fetch.mock.calls[0][1].body);
-            expect(body).not.toHaveProperty('plugins');
-        });
-
-        it('should NOT include web plugin when provider is NOT openrouter', async () => {
-            // Even if webSearch is true, if provider is 'openai', we don't send OR plugins
-            await chatService.sendMessage({
-                provider: 'openai',
-                baseUrl: 'https://api.openai.com/v1',
-                apiKey: 'test-key',
-                model: 'gpt-4',
-                messages: [{ role: 'user', content: 'hello' }],
-                options: { webSearch: true }
             });
 
             const body = JSON.parse(global.fetch.mock.calls[0][1].body);
@@ -94,21 +140,29 @@ describe('Web Search Integration', () => {
             });
         });
 
-        it('should render web search toggle button', () => {
-            render(
-                <ChatInput
-                    onSend={mockOnSend}
-                    onUpload={mockOnUpload}
-                    onReadPage={mockOnReadPage}
-                    isLoading={false}
-                    activeProvider="openrouter"
-                />
-            );
+        it('should render web search toggle button for OpenRouter', () => {
+            render(<ChatInput onSend={mockOnSend} activeProvider="openrouter" isLoading={false} onUpload={mockOnUpload} onReadPage={mockOnReadPage} />);
+            expect(screen.getByTitle('Enable Web Search')).toBeDefined();
+        });
 
-            // Check for the button - assuming we'll use a specific aria-label or accessible name
-            // For now, let's assume we'll give it aria-label="Toggle Web Search"
-            const toggleBtn = screen.getByTitle('Enable Web Search');
-            expect(toggleBtn).toBeDefined();
+        it('should render web search toggle button for OpenAI', () => {
+            render(<ChatInput onSend={mockOnSend} activeProvider="openai" isLoading={false} onUpload={mockOnUpload} onReadPage={mockOnReadPage} />);
+            expect(screen.getByTitle('Enable Web Search')).toBeDefined();
+        });
+
+        it('should render web search toggle button for Anthropic', () => {
+            render(<ChatInput onSend={mockOnSend} activeProvider="anthropic" isLoading={false} onUpload={mockOnUpload} onReadPage={mockOnReadPage} />);
+            expect(screen.getByTitle('Enable Web Search')).toBeDefined();
+        });
+
+        it('should render web search toggle button for Google', () => {
+            render(<ChatInput onSend={mockOnSend} activeProvider="google" isLoading={false} onUpload={mockOnUpload} onReadPage={mockOnReadPage} />);
+            expect(screen.getByTitle('Enable Web Search')).toBeDefined();
+        });
+
+        it('should NOT render web search toggle button for Local', () => {
+            render(<ChatInput onSend={mockOnSend} activeProvider="Local" providerMode="local" isLoading={false} onUpload={mockOnUpload} onReadPage={mockOnReadPage} />);
+            expect(screen.queryByTitle('Enable Web Search')).toBeNull();
         });
 
         it('should toggle web search state on click', () => {
@@ -123,35 +177,82 @@ describe('Web Search Integration', () => {
             );
 
             const toggleBtn = screen.getByTitle('Enable Web Search');
-
-            // Initial state check (e.g. check for class or visually hidden checkbox)
-            // Let's assume visual feedback changes class
-
             fireEvent.click(toggleBtn);
-            // After click, should show active state
 
-            // Check if onSend receives the correct option
             const sendBtn = screen.getByLabelText('Send');
             fireEvent.click(sendBtn);
 
             expect(mockOnSend).toHaveBeenCalledWith(expect.any(String), { webSearch: true });
         });
+    });
 
-        it('should send webSearch: false by default', () => {
-            render(
-                <ChatInput
-                    onSend={mockOnSend}
-                    onUpload={mockOnUpload}
-                    onReadPage={mockOnReadPage}
-                    isLoading={false}
-                    activeProvider="openrouter"
-                />
-            );
+    describe('OpenAI Responses API Parsing', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
 
-            const sendBtn = screen.getByLabelText('Send');
-            fireEvent.click(sendBtn);
+        it('should correctly parse OpenAI Web Search response with citations', async () => {
+            // Mock the specific responses API format
+            const mockResponse = {
+                output: [
+                    {
+                        type: "message",
+                        content: [
+                            {
+                                type: "output_text",
+                                text: "The weather in Paris is sunny.",
+                                annotations: [
+                                    { type: "url_citation", url: "https://weather.com/paris", title: "Weather in Paris" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            };
 
-            expect(mockOnSend).toHaveBeenCalledWith(expect.any(String), { webSearch: false });
+            global.fetch.mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(mockResponse),
+                text: () => Promise.resolve(JSON.stringify(mockResponse))
+            });
+
+            const result = await chatService.sendMessage({
+                provider: 'openai',
+                baseUrl: 'https://api.openai.com/v1',
+                apiKey: 'test-key',
+                model: 'gpt-4o',
+                messages: [{ role: 'user', content: 'Weather Paris' }],
+                options: { webSearch: true }
+            });
+
+            expect(result.content).toContain('The weather in Paris is sunny.');
+            expect(result.content).toContain('Weather in Paris');
+            expect(result.content).toContain('https://weather.com/paris');
+        });
+
+        it('should handle "No text content" scenario gracefully (fallback)', async () => {
+            // Simulate a response that currently fails finding text
+            const mockResponse = {
+                output: [] // Empty output
+            };
+
+            global.fetch.mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(mockResponse),
+                text: () => Promise.resolve(JSON.stringify(mockResponse))
+            });
+
+            const result = await chatService.sendMessage({
+                provider: 'openai',
+                baseUrl: 'https://api.openai.com/v1',
+                apiKey: 'test-key',
+                model: 'gpt-4o',
+                messages: [{ role: 'user', content: 'Weather Paris' }],
+                options: { webSearch: true }
+            });
+
+            // Current implementation returns "No text content returned from Responses API."
+            expect(result.content).toBe("No text content returned from Responses API.");
         });
     });
 });

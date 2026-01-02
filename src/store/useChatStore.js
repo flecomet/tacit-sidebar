@@ -95,6 +95,42 @@ export const useChatStore = create(
                 };
             }),
 
+            addMessageToSession: (sessionId, message) => set((state) => {
+                let newSessions = [...state.sessions];
+                const index = newSessions.findIndex(s => s.id === sessionId);
+
+                if (index === -1) return {};
+
+                const currentSession = newSessions[index];
+                const newMessages = [...currentSession.messages, message];
+
+                // Auto-title
+                let title = currentSession.title;
+                if (title === 'New Chat' || !title) {
+                    const firstUser = newMessages.find(m => m.role === 'user');
+                    if (firstUser) {
+                        title = firstUser.content.slice(0, 30).replace(/\n/g, ' ') + (firstUser.content.length > 30 ? '...' : '');
+                    }
+                }
+
+                newSessions[index] = {
+                    ...currentSession,
+                    messages: newMessages,
+                    title: title || 'Chat',
+                    updatedAt: Date.now()
+                };
+
+                // If currently active, also update the 'messages' pointer
+                if (state.currentSessionId === sessionId) {
+                    return {
+                        sessions: newSessions,
+                        messages: newMessages
+                    };
+                }
+
+                return { sessions: newSessions };
+            }),
+
             clearHistory: () => set((state) => {
                 // Clears messages of current chat
                 // Should also clear frames in session

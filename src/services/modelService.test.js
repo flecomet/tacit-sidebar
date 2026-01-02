@@ -82,4 +82,32 @@ describe('modelService', () => {
             })
         );
     });
+    it('should sort GPT-5 models to the top', async () => {
+        const unsortedModels = [
+            { id: 'openai/gpt-4-turbo-preview', name: 'GPT-4 Turbo' },
+            { id: 'anthropic/claude-3-opus', name: 'Claude 3 Opus' },
+            { id: 'openai/chatgpt-5-pro', name: 'ChatGPT-5 Pro' },
+            { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5' },
+            { id: 'openai/gpt-5', name: 'GPT-5' },
+        ];
+
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            text: async () => JSON.stringify({ data: unsortedModels }),
+        });
+
+        // Use includeFreeModels=true to bypass filtering for this test
+        const models = await fetchModels(null, true);
+
+        // Expected order: GPT-5/ChatGPT-5 first, then GPT-4, then others
+        // gpt-5 or chatgpt-5 should be at index 0 and 1
+        expect(models[0].id).toMatch(/gpt-5/);
+        expect(models[1].id).toMatch(/gpt-5/);
+
+        // gpt-4 should be after gpt-5
+        expect(models[2].id).toContain('gpt-4');
+
+        // others
+        expect(models.slice(3).map(m => m.id)).toEqual(expect.arrayContaining(['anthropic/claude-3-opus', 'openai/gpt-3.5-turbo']));
+    });
 });

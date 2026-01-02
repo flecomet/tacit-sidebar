@@ -302,5 +302,42 @@ describe('App Integration', () => {
         });
     });
 
+    it('should NOT show loading state in active chat when another chat is loading (Parallel Chat)', async () => {
+        // 1. Mock chatService to delay response
+        // We need to bypass the fetch mock and mock chatService.sendMessage specifically or just delay the fetch.
+        // App.jsx imports chatService.
+        // We'll mock chatService.sendMessage to wait.
+        const { chatService } = await import('../services/chatService');
+        // Re-mock it for this test
+        vi.spyOn(chatService, 'sendMessage').mockImplementation(async () => {
+            await new Promise(r => setTimeout(r, 100)); // Delay 100ms
+            return { content: 'Delayed Response', usage: {} };
+        });
+
+        render(<App />);
+
+        // 2. Start Chat A
+        const input = screen.getByPlaceholderText('Ask...');
+        fireEvent.change(input, { target: { value: 'Q1' } });
+        const sendBtn = screen.getByRole('button', { name: /send/i });
+        fireEvent.click(sendBtn);
+
+        // 3. immediately Switch to New Chat (Chat B)
+        const newChatBtn = screen.getByTitle('New Chat');
+        fireEvent.click(newChatBtn);
+
+        // 4. Verify Chat B is NOT showing "Thinking..."
+        // In the current buggy implementation, isLoading is global, so it WOULD show Thinking...
+        // We expect it NOT to.
+        expect(screen.queryByLabelText('Thinking...')).toBeNull();
+
+        // 5. Verify Chat B input is enabled
+        const inputB = screen.getByPlaceholderText('Ask...');
+        expect(inputB.disabled).toBe(false);
+
+        // Clean up
+        vi.spyOn(chatService, 'sendMessage').mockRestore();
+    });
+
 
 });
