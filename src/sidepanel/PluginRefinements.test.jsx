@@ -12,7 +12,12 @@ vi.mock('../services/modelService', () => ({
         { id: 'anthropic/claude-4-sonnet', name: 'Claude 4 Sonnet', architecture: { input_modalities: ['text', 'image'] } },
         { id: 'openai/gpt-4o', name: 'GPT 4o', architecture: { input_modalities: ['text'] } },
         { id: 'google/gemini-pro-vision', name: 'Gemini Pro Vision', architecture: { input_modalities: ['text', 'image'] } }
-    ])
+    ]),
+    getModelCategory: vi.fn().mockImplementation((model) => {
+        if (!model || !model.id) return 'Performance';
+        if (model.id.includes('7b') || model.id.includes('flash')) return 'Small';
+        return 'Performance';
+    })
 }));
 
 // Mock pageScraper
