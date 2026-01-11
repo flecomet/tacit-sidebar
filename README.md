@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[Add a link to Chrome Web Store Here] | [Add a link to Demo Video Here]
+[Chrome Web Store](https://chromewebstore.google.com/detail/tacit/ofkdnnmehcilcnogidbafddkdnojehea) | [Demo Video](https://www.youtube.com/watch?v=6cdTzj2b2KE)
 
 </div>
 
@@ -80,7 +80,7 @@ Give the AI what it needs to help you:
 
 ### 📦 Install from Chrome Web Store
 
-**[Chrome Web Store](#) | [Manual Installation](#developer-installation)**
+**[Chrome Web Store](https://chromewebstore.google.com/detail/tacit/ofkdnnmehcilcnogidbafddkdnojehea) | [Manual Installation](#developer-installation)**
 
 ### 💻 Developer Installation
 
