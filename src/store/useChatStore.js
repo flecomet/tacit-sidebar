@@ -52,6 +52,15 @@ export const useChatStore = create(
             localBaseUrl: 'http://localhost:11434/v1', // Default to Ollama
             setLocalBaseUrl: (url) => set({ localBaseUrl: url }),
 
+            // Web Search Config (for Local Models)
+            webSearchConfig: {
+                enabled: false,
+                provider: 'google',
+                encryptedApiKey: '',
+                cx: ''
+            },
+            setWebSearchConfig: (config) => set(state => ({ webSearchConfig: { ...state.webSearchConfig, ...config } })),
+
             toggleFavorite: (modelId) => set(state => {
                 const isFav = state.favorites.includes(modelId);
                 return {
@@ -93,6 +102,42 @@ export const useChatStore = create(
                     messages: newMessages,
                     sessions: newSessions
                 };
+            }),
+
+            addMessageToSession: (sessionId, message) => set((state) => {
+                let newSessions = [...state.sessions];
+                const index = newSessions.findIndex(s => s.id === sessionId);
+
+                if (index === -1) return {};
+
+                const currentSession = newSessions[index];
+                const newMessages = [...currentSession.messages, message];
+
+                // Auto-title
+                let title = currentSession.title;
+                if (title === 'New Chat' || !title) {
+                    const firstUser = newMessages.find(m => m.role === 'user');
+                    if (firstUser) {
+                        title = firstUser.content.slice(0, 30).replace(/\n/g, ' ') + (firstUser.content.length > 30 ? '...' : '');
+                    }
+                }
+
+                newSessions[index] = {
+                    ...currentSession,
+                    messages: newMessages,
+                    title: title || 'Chat',
+                    updatedAt: Date.now()
+                };
+
+                // If currently active, also update the 'messages' pointer
+                if (state.currentSessionId === sessionId) {
+                    return {
+                        sessions: newSessions,
+                        messages: newMessages
+                    };
+                }
+
+                return { sessions: newSessions };
             }),
 
             clearHistory: () => set((state) => {
@@ -211,7 +256,8 @@ export const useChatStore = create(
                 customBaseUrl: state.customBaseUrl,
                 includeFreeModels: state.includeFreeModels,
                 providerMode: state.providerMode,
-                localBaseUrl: state.localBaseUrl
+                localBaseUrl: state.localBaseUrl,
+                webSearchConfig: state.webSearchConfig
             }),
             version: 0,
             migrate: (state) => state

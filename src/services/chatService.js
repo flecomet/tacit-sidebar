@@ -3,6 +3,8 @@
  * Unified Chat Service
  * Handles payload formatting and API calls for different providers.
  */
+import { manualToolAdapter } from './manualToolAdapter';
+import { webSearchService } from './webSearchService';
 
 export const chatService = {
     /**
@@ -35,10 +37,31 @@ export const chatService = {
 
     // --- OpenAI / OpenRouter / Local Adapter ---
     async sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options }) {
+        // OpenRouter Free Model Check
+        if (provider === 'openrouter' && model.endsWith(':free') && options.webSearch) {
+            console.warn('[ChatService] Web search requested for free model, disabling to avoid error.');
+            options.webSearch = false;
+        }
+
+        // OpenAI Responses API redirection for Web Search
+        if (provider === 'openai' && options.webSearch) {
+            return this.sendOpenAIResponses({ baseUrl, apiKey, model, messages, options });
+        }
+
+        const { webSearch, webSearchConfig, ...otherOptions } = options;
+
+        let finalMessages = messages;
+        let isLocalWebSearch = false;
+
+        if (provider === 'local' && webSearch) {
+            isLocalWebSearch = true;
+            finalMessages = manualToolAdapter.injectHelper(messages);
+        }
+
         const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
 
         // Format messages: Handle Multi-modal
-        const formattedMessages = messages.map(m => {
+        const formattedMessages = finalMessages.map(m => {
             if (!m.files || m.files.length === 0) {
                 return { role: m.role, content: m.content };
             }
@@ -83,14 +106,21 @@ export const chatService = {
             headers["Authorization"] = `Bearer ${apiKey}`;
         }
 
+        const payload = {
+            model: model,
+            messages: formattedMessages,
+            ...otherOptions
+        };
+
+        if (provider === 'openrouter' && webSearch) {
+            payload.plugins = [{ id: "web" }];
+        }
+
+
         const response = await fetch(url, {
             method: "POST",
             headers,
-            body: JSON.stringify({
-                model: model,
-                messages: formattedMessages,
-                ...options
-            })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -127,6 +157,63 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         }
 
         let content = data.choices[0].message.content || '';
+
+        // Handle Local Web Search Tool Call
+        if (isLocalWebSearch) {
+            const toolCall = manualToolAdapter.parseToolCall(content);
+            if (toolCall) {
+                console.log('[ChatService] Local Model Tool Call:', toolCall);
+
+                let searchResults = [];
+                try {
+                    // Use config passed in options, or fallback to mock/defaults if testing
+                    if (webSearchConfig) {
+                        searchResults = await webSearchService.search(
+                            webSearchConfig.provider,
+                            toolCall.args.query,
+                            webSearchConfig
+                        );
+                    } else {
+                        // If no config but webSearch=true (maybe testing), mock or fail.
+                        // In prod, App.jsx ensures config is passed. 
+                        console.warn('Web Search Config missing, returning error.');
+                        throw new Error("Web Search Config missing. Please configure in Settings.");
+                    }
+                } catch (e) {
+                    console.error("Web Search Error", e);
+                    searchResults = [{ title: "Error", link: "", snippet: e.message }];
+                }
+
+                const toolOutput = manualToolAdapter.formatToolResult(searchResults);
+
+                // Recursion: Send back to model
+                const followUpMessages = [
+                    ...finalMessages,
+                    { role: 'assistant', content: content },
+                    { role: 'user', content: toolOutput }
+                ];
+
+                // Recursive call (disable webSearch to prevent loops)
+                return this.sendOpenAICompatible({
+                    provider, baseUrl, apiKey, model,
+                    messages: followUpMessages,
+                    options: { ...otherOptions, webSearch: false, webSearchConfig }
+                });
+            }
+        }
+
+        // Handle Tool Calls (e.g. if Native Search returns a call instead of result, or fallbacks)
+        if (data.choices[0].message.tool_calls) {
+            const calls = data.choices[0].message.tool_calls.map(tc => {
+                if (tc.type === 'function') {
+                    return `[Tool Call: ${tc.function.name}(${tc.function.arguments})]`;
+                }
+                return `[Tool Call: ${tc.type}]`;
+            }).join('\n');
+            if (content) content += '\n\n';
+            content += calls;
+        }
+
         const attachments = [];
 
         // Handle "Nano Banana" style images (OpenRouter specific)
@@ -170,6 +257,96 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             content: content,
             attachments: attachments,
             usage: data.usage || { total_tokens: 0 }
+        };
+    },
+
+    // --- OpenAI Responses API (Web Search) ---
+    async sendOpenAIResponses({ baseUrl, apiKey, model, messages, options }) {
+        const url = `${baseUrl.replace(/\/$/, '')}/responses`;
+
+        // Use the last user message as the input prompt
+        const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+        const input = lastUserMessage ? lastUserMessage.content : 'Hello';
+
+        const payload = {
+            model: model,
+            tools: [{ type: "web_search" }],
+            input: input
+        };
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`OpenAI Responses API Error ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+
+        // Fallback: Check if the endpoint returned a standard Chat Completion response (choices array)
+        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+            return {
+                content: data.choices[0].message.content,
+                attachments: [],
+                usage: data.usage || { total_tokens: 0 }
+            };
+        }
+
+        let content = '';
+        const items = Array.isArray(data) ? data : (data.output || []);
+
+        // Strategy 1: Look for "message" items (Standard Responses API)
+        const messageItem = items.find(i => i.type === 'message');
+        if (messageItem && messageItem.content) {
+            if (Array.isArray(messageItem.content)) {
+                messageItem.content.forEach(c => {
+                    if (c.type === 'output_text') {
+                        content += c.text;
+
+                        // Handle annotations (citations)
+                        if (c.annotations && c.annotations.length > 0) {
+                            content += '\n\n**Sources:**\n';
+                            c.annotations.forEach(a => {
+                                if (a.type === 'url_citation') {
+                                    content += `- [${a.title || a.url}](${a.url})\n`;
+                                }
+                            });
+                        }
+                    }
+                });
+            } else if (typeof messageItem.content === 'string') {
+                // Handle case where content is a simple string
+                content = messageItem.content;
+            }
+        }
+
+        // Strategy 2: Look for top-level "answer" or "text" or "content" (Non-standard simplifications)
+        if (!content) {
+            content = data.answer || data.text || data.content || '';
+        }
+
+        // Strategy 3: Look for "search_result" type if message is missing but results exist
+        if (!content && items.some(i => i.type === 'search_result')) {
+            const results = items.filter(i => i.type === 'search_result');
+            content = "**Search Results:**\n\n" + results.map(r => `- [${r.title || r.url}](${r.url}): ${r.snippet || ''}`).join('\n\n');
+        }
+
+        // If no message found, look for raw text or fallback
+        if (!content) {
+            content = "No text content returned from Responses API.";
+        }
+
+        return {
+            content: content,
+            attachments: [],
+            usage: { total_tokens: 0 }
         };
     },
 
@@ -222,12 +399,25 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             "anthropic-dangerous-direct-browser-access": "true" // Required for browser usage
         };
 
+        const { webSearch, ...restOptions } = options;
+
         const payload = {
             model: model,
             max_tokens: 4096,
             messages: formattedMessages,
-            ...options
+            ...restOptions
         };
+
+        if (webSearch) {
+            // For built-in web search, likely we just need the name.
+            // If we provide a schema, the model treats it as a client-side tool it must "call".
+            // By omitting schema or strictly following the server-side tool definition, we hope for server-side execution.
+            // User docs suggest it's a server tool.
+            payload.tools = [{
+                type: "web_search_20250305",
+                name: "web_search"
+            }];
+        }
 
         if (systemMessage) {
             payload.system = systemMessage.content;
@@ -245,8 +435,17 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             throw new Error(data.error.message || 'Anthropic API Error');
         }
 
-        // Anthropic returns { content: [{ type: 'text', text: '...' }] }
-        const content = data.content ? data.content.map(c => c.text).join('') : '';
+        // Anthropic returns { content: [{ type: 'text', text: '...' }, { type: 'tool_use', ... }] }
+        let content = '';
+        if (data.content) {
+            content = data.content.map(c => {
+                if (c.type === 'text') return c.text;
+                if (c.type === 'tool_use') {
+                    return `[Tool Use: ${c.name} Input: ${JSON.stringify(c.input)}]`;
+                }
+                return '';
+            }).join('');
+        }
 
         return {
             content,
@@ -303,12 +502,18 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
 
         const systemMessage = messages.find(m => m.role === 'system');
 
+        const { webSearch, ...generationConfig } = options;
+
         const payload = {
             contents: contents,
             generationConfig: {
-                ...options
+                ...generationConfig
             }
         };
+
+        if (webSearch) {
+            payload.tools = [{ google_search: {} }];
+        }
 
         if (systemMessage) {
             payload.system_instruction = {

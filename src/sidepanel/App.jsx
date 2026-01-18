@@ -23,20 +23,30 @@ export default function App() {
         customBaseUrl, setCustomBaseUrl,
         includeFreeModels, setIncludeFreeModels,
         providerMode, setProviderMode,
-        localBaseUrl, setLocalBaseUrl
+        localBaseUrl, setLocalBaseUrl,
+        webSearchConfig, setWebSearchConfig
     } = useChatStore();
 
     // Local UI state
     const [showSettings, setShowSettings] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingSessionIds, setLoadingSessionIds] = useState([]); // Track loading state per session
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [attachments, setAttachments] = useState([]);
 
     const [tempKey, setTempKey] = useState('');
     const [tempBaseUrl, setTempBaseUrl] = useState('');
     const [tempLocalUrl, setTempLocalUrl] = useState('');
+
+    // Web Search Settings State
+    const [tempSearchKey, setTempSearchKey] = useState('');
+    const [tempSearchCX, setTempSearchCX] = useState('');
+
     const [isDragging, setIsDragging] = useState(false);
     const [viewingFile, setViewingFile] = useState(null);
+
+    // Derived loading state for current view
+    const currentSessionId = useChatStore(state => state.currentSessionId);
+    const isCurrentSessionLoading = loadingSessionIds.includes(currentSessionId);
 
     // Initialize session
     useEffect(() => {
@@ -65,6 +75,24 @@ export default function App() {
         };
         loadKey();
     }, [showSettings, activeCloudProvider, providerMode, encryptedApiKeys, customBaseUrl, localBaseUrl]);
+
+    // Load Search Keys
+    useEffect(() => {
+        const loadSearchKey = async () => {
+            if (showSettings) {
+                if (webSearchConfig.encryptedApiKey) {
+                    try {
+                        const key = await decryptData(webSearchConfig.encryptedApiKey);
+                        setTempSearchKey(key || '');
+                    } catch (e) { console.error(e); setTempSearchKey(''); }
+                } else {
+                    setTempSearchKey('');
+                }
+                setTempSearchCX(webSearchConfig.cx || '');
+            }
+        };
+        loadSearchKey();
+    }, [showSettings, webSearchConfig]);
 
     // Manual Save Key Handler
     const handleSaveKey = async () => {
@@ -240,9 +268,10 @@ export default function App() {
         };
     }, [customBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, encryptedApiKeys, setAvailableModels, setModel]);
 
-    const handleSend = async (text) => {
+    const handleSend = async (text, options = {}) => {
         const isLocal = providerMode === 'local';
         const provider = isLocal ? 'local' : activeCloudProvider;
+        const { webSearch } = options;
         let apiKey = '';
 
         if (!isLocal) {
@@ -258,7 +287,9 @@ export default function App() {
             }
         }
 
-        setIsLoading(true);
+        // Capture session ID *before* async operation so we lock the correct session
+        const initiatingSessionId = useChatStore.getState().currentSessionId;
+        setLoadingSessionIds(prev => [...prev, initiatingSessionId]);
 
         try {
             // 1. Check Payload Requirements (Vision)
@@ -283,12 +314,34 @@ export default function App() {
 
             // 2. Add User Message (Optimistic UI)
             const userMsg = { role: 'user', content: text, files: attachments };
+
+            // We use addMessage for the user message to ensure it appears immediately
+            // But we should really use addMessageToSession to be safe, though addMessage defaults to valid current.
+            // Let's stick to addMessage for the user interaction trigger (synchronous-ish)
             addMessage(userMsg);
+
             setAttachments([]);
 
             // 3. Prepare Service Call
             const startTime = Date.now();
             let baseUrl = isLocal ? (localBaseUrl || 'http://localhost:11434/v1') : customBaseUrl;
+
+            // Prepare Web Search Config with Decrypted Key
+            let activeWebSearchConfig = null;
+            if (options.webSearch && providerMode === 'local') {
+                // Clone to avoid mutating store state
+                const config = { ...webSearchConfig };
+                if (config.encryptedApiKey) {
+                    try {
+                        config.apiKey = await decryptData(config.encryptedApiKey);
+                    } catch (e) {
+                        console.error("Failed to decrypt web search key:", e);
+                        alert("Failed to decrypt web search key. Please re-enter it in settings.");
+                        options.webSearch = false; // Disable if decryption fails
+                    }
+                }
+                activeWebSearchConfig = config;
+            }
 
             if (!isLocal && !baseUrl) {
                 if (activeCloudProvider === 'openrouter') baseUrl = 'https://openrouter.ai/api/v1';
@@ -304,14 +357,23 @@ export default function App() {
                 apiKey: apiKey,
                 model: model,
                 messages: messages.concat(userMsg),
-                options: {} // can add temperature etc here
+                options: {
+                    ...options,
+                    webSearchConfig: activeWebSearchConfig // Pass decrypted config
+                }
             });
 
             const endTime = Date.now();
 
             // Calculate Metrics
             let cost = 0;
-            if (activeModelData?.pricing) {
+
+            // 1. Prefer Provider's reported cost (OpenRouter)
+            if (response.usage?.cost) {
+                cost = parseFloat(response.usage.cost);
+            }
+            // 2. Fallback to local estimation
+            else if (activeModelData?.pricing) {
                 const { prompt, completion } = activeModelData.pricing;
                 const inputTokens = response.usage?.prompt_tokens || response.usage?.input_tokens || 0;
                 const outputTokens = response.usage?.completion_tokens || response.usage?.output_tokens || 0;
@@ -332,14 +394,17 @@ export default function App() {
                     cost: cost
                 }
             };
-            addMessage(aiMsg);
+
+            // Target the specific session that initiated the request
+            useChatStore.getState().addMessageToSession(initiatingSessionId, aiMsg);
+
             return true;
 
         } catch (err) {
             addMessage({ role: 'system', content: `Error: ${err.message}` });
             return false;
         } finally {
-            setIsLoading(false);
+            setLoadingSessionIds(prev => prev.filter(id => id !== initiatingSessionId));
         }
     };
 
@@ -529,6 +594,71 @@ export default function App() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Local Web Search Settings */}
+                                <div className="mt-6 pt-4 border-t border-brand-border">
+                                    <h3 className="text-sm font-bold text-gray-200 mb-3 flex items-center gap-2">
+                                        Web Search Configuration
+                                    </h3>
+
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-medium text-gray-400">Search Provider</label>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {['google', 'serpapi', 'serper'].map(p => (
+                                                    <button
+                                                        key={p}
+                                                        onClick={() => setWebSearchConfig({ provider: p })}
+                                                        className={`py-1.5 px-2 rounded border text-xs capitalize ${webSearchConfig.provider === p ? 'border-brand-cyan bg-brand-cyan/10 text-brand-cyan font-bold' : 'border-brand-border bg-brand-input hover:bg-white/5 text-gray-400'}`}
+                                                    >
+                                                        {p === 'serper' ? 'Serper.dev' : p === 'serpapi' ? 'SerpApi' : 'Google'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-medium text-gray-400">
+                                                {webSearchConfig.provider === 'google' ? 'Google Custom Search API Key' :
+                                                    webSearchConfig.provider === 'serpapi' ? 'SerpApi Key' : 'Serper.dev API Key'}
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={tempSearchKey}
+                                                onChange={(e) => setTempSearchKey(e.target.value)}
+                                                placeholder="Key..."
+                                                className="w-full p-2 bg-brand-input border border-brand-border rounded focus:ring-2 focus:ring-brand-cyan outline-none text-white text-xs"
+                                            />
+                                        </div>
+
+                                        {webSearchConfig.provider === 'google' && (
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-medium text-gray-400">Search Engine ID (CX)</label>
+                                                <input
+                                                    type="text"
+                                                    value={tempSearchCX}
+                                                    onChange={(e) => setTempSearchCX(e.target.value)}
+                                                    placeholder="cx..."
+                                                    className="w-full p-2 bg-brand-input border border-brand-border rounded focus:ring-2 focus:ring-brand-cyan outline-none text-white text-xs"
+                                                />
+                                            </div>
+                                        )}
+
+                                        <button
+                                            onClick={async () => {
+                                                const encrypted = tempSearchKey ? await encryptData(tempSearchKey) : '';
+                                                setWebSearchConfig({
+                                                    encryptedApiKey: encrypted,
+                                                    cx: tempSearchCX
+                                                });
+                                                alert('Search configuration saved!');
+                                            }}
+                                            className="w-full bg-brand-input hover:bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/50 py-1.5 rounded text-xs font-bold transition-colors"
+                                        >
+                                            Save Search Config
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -575,46 +705,48 @@ export default function App() {
             {/* Message List */}
             <MessageList
                 messages={messages}
-                isLoading={isLoading}
+                isLoading={isCurrentSessionLoading}
                 onViewFile={setViewingFile}
             />
 
             {/* Attachment Preview */}
-            {attachments.length > 0 && (
-                <div className="px-4 py-2 bg-brand-card border-t border-brand-border flex gap-2 overflow-x-auto">
-                    {attachments.map((file, i) => (
-                        <div
-                            key={i}
-                            onClick={() => setViewingFile(file)}
-                            className="flex items-center gap-2 bg-brand-input px-2 py-1 rounded text-xs border border-brand-border shadow-sm text-gray-200 cursor-pointer hover:bg-white/5 transition-colors"
-                        >
-                            <span className="truncate max-w-[120px]">{file.name}</span>
-                            <button onClick={(e) => {
-                                e.stopPropagation();
-                                setAttachments(attachments.filter((_, idx) => idx !== i));
-                            }}>
-                                <X size={12} className="text-gray-400 hover:text-red-400" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
+            {
+                attachments.length > 0 && (
+                    <div className="px-4 py-2 bg-brand-card border-t border-brand-border flex gap-2 overflow-x-auto">
+                        {attachments.map((file, i) => (
+                            <div
+                                key={i}
+                                onClick={() => setViewingFile(file)}
+                                className="flex items-center gap-2 bg-brand-input px-2 py-1 rounded text-xs border border-brand-border shadow-sm text-gray-200 cursor-pointer hover:bg-white/5 transition-colors"
+                            >
+                                <span className="truncate max-w-[120px]">{file.name}</span>
+                                <button onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAttachments(attachments.filter((_, idx) => idx !== i));
+                                }}>
+                                    <X size={12} className="text-gray-400 hover:text-red-400" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )
+            }
 
             {/* Input Area */}
             <ChatInput
                 onSend={handleSend}
                 onUpload={handleFileUpload}
                 onReadPage={handleReadPage}
-                isLoading={isLoading}
-                disabled={isLoading}
+                isLoading={isCurrentSessionLoading}
+                disabled={isCurrentSessionLoading}
                 providerMode={providerMode}
-                activeProvider={providerMode === 'local' ? 'Local' : activeCloudProvider}
+                activeProvider={providerMode === 'local' ? 'local' : activeCloudProvider}
             />
 
             {/* Document Viewer Modal */}
             <DocViewerModal file={viewingFile} onClose={() => setViewingFile(null)} />
 
             <HistorySidebar isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
-        </div>
+        </div >
     );
 }

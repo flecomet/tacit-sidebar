@@ -1,6 +1,63 @@
 /**
  * Service to interact with cloud providers APIs for model lists
  */
+
+const sortOpenAIModels = (models) => {
+    return models.sort((a, b) => {
+        const idA = a.id.toLowerCase();
+        const idB = b.id.toLowerCase();
+
+        // Helper to extract version
+        const getVersion = (id) => {
+            const match = id.match(/(?:gpt|chatgpt)-(\d+(?:\.\d+)?)/);
+            if (match) return parseFloat(match[1]);
+            return 0;
+        };
+
+        const verA = getVersion(idA);
+        const verB = getVersion(idB);
+
+        // Priority 1: GPT-5+ (>= 5.0)
+        const isA5 = verA >= 5;
+        const isB5 = verB >= 5;
+
+        if (isA5 && !isB5) return -1;
+        if (!isA5 && isB5) return 1;
+        if (isA5 && isB5) {
+            if (verA !== verB) return verB - verA; // Descending version
+            return 0;
+        }
+
+        // Priority 2: o1 models (Reasoning)
+        const isAo1 = idA.includes('o1');
+        const isBo1 = idB.includes('o1');
+
+        if (isAo1 && !isBo1) return -1;
+        if (!isAo1 && isBo1) return 1;
+        if (isAo1 && isBo1) return idA.localeCompare(idB);
+
+        // Priority 3: GPT-4 (>= 4.0 and < 5.0)
+        const isA4 = verA >= 4;
+        const isB4 = verB >= 4;
+
+        if (isA4 && !isB4) return -1;
+        if (!isA4 && isB4) return 1;
+        if (isA4 && isB4) {
+            if (verA !== verB) return verB - verA;
+            // Put turbo/o before vanilla if same version?
+            // Let's just create a quick heuristic for 4o > 4-turbo > 4
+            const getVariantScore = (id) => {
+                if (id.includes('gpt-4o')) return 3;
+                if (id.includes('turbo')) return 2;
+                return 1;
+            }
+            return getVariantScore(idB) - getVariantScore(idA);
+        }
+
+        return 0;
+    });
+};
+
 export const fetchModels = async (customBaseUrl, includeFreeModels = false, provider = 'openrouter', apiKey = '') => {
     try {
         let models = [];
@@ -70,10 +127,17 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
 
             const data = await response.json();
             models = (data.data || [])
-                .filter(m => m.id.includes('gpt')) // Filter for GPT models roughly
+                .filter(m => m.id.includes('gpt') || m.id.includes('o1')) // Filter for GPT or o1 models
                 .map(m => ({ id: m.id, name: m.id }));
 
-            return models.map(m => ({ ...m, _category: m.id.includes('gpt-4') ? 'Performance' : 'Small' }));
+            // Apply sorting logic to OpenAI provider too
+            // Apply sorting logic to OpenAI provider too
+            sortOpenAIModels(models);
+
+            return models.map(m => ({
+                ...m,
+                _category: getModelCategory(m)
+            }));
         }
 
 
@@ -148,20 +212,30 @@ export const getModelCategory = (model) => {
     const id = model.id.toLowerCase();
     const name = (model.name || '').toLowerCase();
 
-    // Specific check for Gemini Pro to ensure it hits Performance
-    // "gemini" contains "mini", so we need to be careful
-    if (id.includes('gemini') && id.includes('pro')) {
+    // Performance: GPT-4, GPT-5, o1, Claude 3 Opus/Sonnet/3.5 Sonnet, Gemini Pro
+    // We check these first, but exclude "mini"/"haiku" variants which are Small
+    if (id.includes('gpt-5') || id.includes('gpt-4') || id.includes('o1') ||
+        id.includes('claude-3-opus') || id.includes('claude-3-sonnet') ||
+        id.includes('claude-3.5-sonnet') ||
+        (id.includes('gemini') && id.includes('pro')) ||
+        id.includes('gemini-1.5-pro') ||
+        id.includes('mistral-large') ||
+        id.includes('llama-3.1-405b')
+    ) {
+        if (id.includes('mini') || id.includes('micro') || id.includes('haiku') || id.includes('flash-8b')) {
+            return 'Small';
+        }
         return 'Performance';
     }
 
     // Light/Small models
-    // Exclude 'gemini' here because of the 'mini' substring match issue if we used 'mini'
-    // But 'mini' IS in the list.
     const smallKeywords = ['7b', '8b', 'phi', 'gemma', 'haiku', 'flash', 'micro', 'mini', 'turbo'];
 
     if (smallKeywords.some(k => {
         // Special case: if keyword is 'mini' and model is 'gemini', ignore unless it's 'gemini-mini' (doesn't exist)
         if (k === 'mini' && id.includes('gemini') && !id.includes('mini-')) return false;
+        // Special case: 'turbo' is often Performance for OpenAI (handled above) 
+        // but might be small for others. If we reached here, it wasn't caught by the heavy weights above.
         return id.includes(k) || name.includes(k);
     })) {
         return 'Small';

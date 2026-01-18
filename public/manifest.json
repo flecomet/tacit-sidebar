@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Tacit: Privacy-First AI Sidebar (OpenRouter, Local, OpenAI, Claude, Gemini)",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Zero-tracking AI assistant. Chat with GPT, Claude, Gemini, or local models without subscription.",
     "permissions": [
         "sidePanel",
@@ -47,7 +47,7 @@
         }
     },
     "content_security_policy": {
-        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://openrouter.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com http://localhost:* http://127.0.0.1:* data:; img-src 'self' https: data: blob: http://localhost:* http://127.0.0.1:*;"
+        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' https://openrouter.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com https://serpapi.com https://google.serper.dev http://localhost:* http://127.0.0.1:* data:; img-src 'self' https: data: blob: http://localhost:* http://127.0.0.1:*;"
     },
     "web_accessible_resources": [
         {
