@@ -250,8 +250,8 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
                     <FileDown size={20} />
                 </button>
 
-                {/* Web Search Toggle (Supported by OpenRouter, OpenAI, Anthropic, Google) */}
-                {['openrouter', 'openai', 'anthropic', 'google'].includes(activeProvider) && (
+                {/* Web Search Toggle (Supported by OpenRouter, OpenAI, Anthropic, Google, and Local) */}
+                {['openrouter', 'openai', 'anthropic', 'google', 'local'].includes(activeProvider) && (
                     <button
                         onClick={() => !isFreeModel && setWebSearchEnabled(!webSearchEnabled)}
                         disabled={disabled || isFreeModel}

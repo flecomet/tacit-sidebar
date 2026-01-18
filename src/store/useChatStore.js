@@ -52,6 +52,15 @@ export const useChatStore = create(
             localBaseUrl: 'http://localhost:11434/v1', // Default to Ollama
             setLocalBaseUrl: (url) => set({ localBaseUrl: url }),
 
+            // Web Search Config (for Local Models)
+            webSearchConfig: {
+                enabled: false,
+                provider: 'google',
+                encryptedApiKey: '',
+                cx: ''
+            },
+            setWebSearchConfig: (config) => set(state => ({ webSearchConfig: { ...state.webSearchConfig, ...config } })),
+
             toggleFavorite: (modelId) => set(state => {
                 const isFav = state.favorites.includes(modelId);
                 return {
@@ -247,7 +256,8 @@ export const useChatStore = create(
                 customBaseUrl: state.customBaseUrl,
                 includeFreeModels: state.includeFreeModels,
                 providerMode: state.providerMode,
-                localBaseUrl: state.localBaseUrl
+                localBaseUrl: state.localBaseUrl,
+                webSearchConfig: state.webSearchConfig
             }),
             version: 0,
             migrate: (state) => state

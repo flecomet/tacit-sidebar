@@ -3,6 +3,8 @@
  * Unified Chat Service
  * Handles payload formatting and API calls for different providers.
  */
+import { manualToolAdapter } from './manualToolAdapter';
+import { webSearchService } from './webSearchService';
 
 export const chatService = {
     /**
@@ -46,10 +48,20 @@ export const chatService = {
             return this.sendOpenAIResponses({ baseUrl, apiKey, model, messages, options });
         }
 
+        const { webSearch, webSearchConfig, ...otherOptions } = options;
+
+        let finalMessages = messages;
+        let isLocalWebSearch = false;
+
+        if (provider === 'local' && webSearch) {
+            isLocalWebSearch = true;
+            finalMessages = manualToolAdapter.injectHelper(messages);
+        }
+
         const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
 
         // Format messages: Handle Multi-modal
-        const formattedMessages = messages.map(m => {
+        const formattedMessages = finalMessages.map(m => {
             if (!m.files || m.files.length === 0) {
                 return { role: m.role, content: m.content };
             }
@@ -93,8 +105,6 @@ export const chatService = {
         if (apiKey) {
             headers["Authorization"] = `Bearer ${apiKey}`;
         }
-
-        const { webSearch, ...otherOptions } = options;
 
         const payload = {
             model: model,
@@ -147,6 +157,50 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         }
 
         let content = data.choices[0].message.content || '';
+
+        // Handle Local Web Search Tool Call
+        if (isLocalWebSearch) {
+            const toolCall = manualToolAdapter.parseToolCall(content);
+            if (toolCall) {
+                console.log('[ChatService] Local Model Tool Call:', toolCall);
+
+                let searchResults = [];
+                try {
+                    // Use config passed in options, or fallback to mock/defaults if testing
+                    if (webSearchConfig) {
+                        searchResults = await webSearchService.search(
+                            webSearchConfig.provider,
+                            toolCall.args.query,
+                            webSearchConfig
+                        );
+                    } else {
+                        // If no config but webSearch=true (maybe testing), mock or fail.
+                        // In prod, App.jsx ensures config is passed. 
+                        console.warn('Web Search Config missing, returning error.');
+                        throw new Error("Web Search Config missing. Please configure in Settings.");
+                    }
+                } catch (e) {
+                    console.error("Web Search Error", e);
+                    searchResults = [{ title: "Error", link: "", snippet: e.message }];
+                }
+
+                const toolOutput = manualToolAdapter.formatToolResult(searchResults);
+
+                // Recursion: Send back to model
+                const followUpMessages = [
+                    ...finalMessages,
+                    { role: 'assistant', content: content },
+                    { role: 'user', content: toolOutput }
+                ];
+
+                // Recursive call (disable webSearch to prevent loops)
+                return this.sendOpenAICompatible({
+                    provider, baseUrl, apiKey, model,
+                    messages: followUpMessages,
+                    options: { ...otherOptions, webSearch: false, webSearchConfig }
+                });
+            }
+        }
 
         // Handle Tool Calls (e.g. if Native Search returns a call instead of result, or fallbacks)
         if (data.choices[0].message.tool_calls) {
