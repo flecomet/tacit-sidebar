@@ -1,4 +1,4 @@
-# Tacit: The "Zero-Knowledge" AI Sidekick
+# Tacit: The Zero-Knowledge AI Sidebar
 
 <div align="center">
 
@@ -22,50 +22,55 @@
 
 **"The extension that knows nothing about you."**
 
-Every other AI browser extension wants three things:
-1. Your data (to "improve the experience")
-2. Your money (via markup on AI providers)
-3. Your attention (with cluttered UI and features you didn't ask for)
+Most AI browser extensions follow the same playbook:
+1. Collect your data (to "improve the experience")
+2. Mark up AI provider costs
+3. Clutter your browser with features you didn't ask for
 
-**Tacit takes the opposite approach.**
+We built Tacit differently.
 
 ### Our Principles
 
-#### 1. Zero-Knowledge Privacy
+### Zero-Knowledge Privacy
 - **No backend servers**. We don't have a database. We literally *cannot* see your conversations.
 - **Local-first storage**. Your chat history and API key are encrypted in your browser local storage.
 - **Auditable code**. Open sourced on github.
 
-#### 2. Zero Markup Pricing
+### Zero-Markup Pricing
 - **Bring Your Own Key (BYOK)**. Pay wholesale rates directly to OpenRouter, OpenAI, Anthropic, or Google.
 - **Or pay nothing**. Run Ollama or LM Studio locally with zero API costs.
 - **No subscription trap**. We'll never gate core features behind a paywall.
 
-#### 3. Zero Clutter
+### Zero Clutter
 - **No injected buttons** polluting your navigation.
 - **No "AI Shopping Assistant"** or other gimmicks.
 - **Just a sidebar**. Press `Alt+J`, ask your question, get your answer.
 
 ## ✨ Features
 
-### ⚡ Core Experience
+### ⚡ The Basics
 - **Global hotkey**: `Alt+J` (or `Option+J` on Mac) slides the sidebar in from any webpage
 - **Persistent chat history**: Local storage with client-side encryption
 - **Works everywhere**: Lives besides your tabs, follows your browsing
 
-### 🧠 Multi-Provider Intelligence
+### 🧠 Model Support
 Connect to any of these:
 - **Cloud APIs**: OpenRouter (600+ models, including vision models and Nano Banana Pro), Anthropic Claude, OpenAI GPT, Google Gemini
 - **Local models**: Ollama and LM Studio with automatic CORS configuration
 - **Smart defaults**: Tacit detects vision-capable models automatically
 
-### 👀 Context Awareness
-Give the AI what it needs to help you:
+### 👀 What You Can Feed It
+Feed it whatever you're working with:
 - **"Read This Page"**: One-click to capture the current tab's text content
 - **Drag-and-drop files**: 
   - Images → Vision analysis (screenshots, diagrams, memes)
   - PDFs → Full text extraction
   - Code/Markdown → Syntax-aware parsing
+
+### 🌐 Web Search
+Need answers about what happened yesterday? Enable web search.
+- **Live Web Access**: Enable search to let the AI browse the internet for real-time info.
+- **Stay Current**: Get answers about recent events beyond the model's training data.
 
 ## ⚖️ How We Compare
 
@@ -116,7 +121,7 @@ If you prefer to build from source or contribute:
 
 ## 🛠️ Configuration
 
-Tacit works out of the box, but you must provide your own intelligence:
+Tacit works out of the box once you add an API key:
 
 1. Open the extension (Alt+J).
 2. Go to **Settings**.
@@ -137,16 +142,11 @@ Tacit is a "zero-server" application running entirely in the browser:
 
 ## 💰 Monetization
 
-Tacit's core will **always be free and open-source** (AGPL-3.0 License).
-
-**What we'll never do**:
-- ❌ Charge monthly subscriptions for core features
-- ❌ Inject ads into the sidebar
-- ❌ Sell your data (we don't have it anyways)
+Tacit is free and open-source (AGPL-3.0). We're not adding subscriptions, ads, or selling data.
 
 ## 🤝 Contributing
 
-We love pull requests! If you have an idea for a feature, please open an issue to discuss it.
+Got an idea? Open an issue first so we can discuss it before you spend time coding.
 
 ## 📄 License
 
