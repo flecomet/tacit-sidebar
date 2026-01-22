@@ -40,43 +40,49 @@ const getCrypto = () => {
 
 // Cache the key in memory to avoid repeated storage reads and imports
 let cachedKey = null;
+let keyLoadingPromise = null;
 
 /**
  * Generates and stores a new encryption key.
  */
 const getOrCreateKey = async () => {
     if (cachedKey) return cachedKey;
+    if (keyLoadingPromise) return keyLoadingPromise;
 
-    const storage = getStorage();
-    let jwk = await storage.get(KEY_STORAGE_KEY);
-    const crypto = getCrypto();
+    keyLoadingPromise = (async () => {
+        const storage = getStorage();
+        let jwk = await storage.get(KEY_STORAGE_KEY);
+        const crypto = getCrypto();
 
-    if (!jwk) {
-        // Generate new key
-        const key = await crypto.subtle.generateKey(
-            { name: ALGORITHM, length: 256 },
-            true, // extractable
+        if (!jwk) {
+            // Generate new key
+            const key = await crypto.subtle.generateKey(
+                { name: ALGORITHM, length: 256 },
+                true, // extractable
+                ['encrypt', 'decrypt']
+            );
+            // Export to JWK to store it
+            jwk = await crypto.subtle.exportKey('jwk', key);
+            await storage.set(KEY_STORAGE_KEY, jwk);
+
+            cachedKey = key;
+            return key;
+        }
+
+        // Import existing key
+        const importedKey = await crypto.subtle.importKey(
+            'jwk',
+            jwk,
+            { name: ALGORITHM },
+            true,
             ['encrypt', 'decrypt']
         );
-        // Export to JWK to store it
-        jwk = await crypto.subtle.exportKey('jwk', key);
-        await storage.set(KEY_STORAGE_KEY, jwk);
 
-        cachedKey = key;
-        return key;
-    }
+        cachedKey = importedKey;
+        return importedKey;
+    })();
 
-    // Import existing key
-    const importedKey = await crypto.subtle.importKey(
-        'jwk',
-        jwk,
-        { name: ALGORITHM },
-        true,
-        ['encrypt', 'decrypt']
-    );
-
-    cachedKey = importedKey;
-    return importedKey;
+    return keyLoadingPromise;
 };
 
 /**
@@ -157,5 +163,8 @@ export const encryptData = encrypt;
 export const decryptData = decrypt;
 
 // For testing purposes only
-export const _resetCache = () => { cachedKey = null; };
+export const _resetCache = () => {
+    cachedKey = null;
+    keyLoadingPromise = null;
+};
 

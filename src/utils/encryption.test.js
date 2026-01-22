@@ -40,5 +40,21 @@ describe('Encryption Utility', () => {
         // Currently it is NOT cached, so this test should FAIL (RED).
         expect(chrome.storage.local.get).toHaveBeenCalledTimes(1);
     });
+    it('should handle concurrent access efficiently (prevent race conditions)', async () => {
+        _resetCache();
+        chrome.storage.local.get.mockClear();
+
+        // Simulate concurrent calls (e.g. loading list of messages)
+        await Promise.all([
+            encrypt('concurrent1'),
+            encrypt('concurrent2'),
+            encrypt('concurrent3'),
+            encrypt('concurrent4'),
+            encrypt('concurrent5')
+        ]);
+
+        // Even with 5 concurrent calls, we should only hit storage/crypto ONCE
+        expect(chrome.storage.local.get).toHaveBeenCalledTimes(1);
+    });
 });
 
