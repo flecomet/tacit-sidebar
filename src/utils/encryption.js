@@ -38,10 +38,15 @@ const getCrypto = () => {
     return window.crypto;
 };
 
+// Cache the key in memory to avoid repeated storage reads and imports
+let cachedKey = null;
+
 /**
  * Generates and stores a new encryption key.
  */
 const getOrCreateKey = async () => {
+    if (cachedKey) return cachedKey;
+
     const storage = getStorage();
     let jwk = await storage.get(KEY_STORAGE_KEY);
     const crypto = getCrypto();
@@ -56,17 +61,22 @@ const getOrCreateKey = async () => {
         // Export to JWK to store it
         jwk = await crypto.subtle.exportKey('jwk', key);
         await storage.set(KEY_STORAGE_KEY, jwk);
+
+        cachedKey = key;
         return key;
     }
 
     // Import existing key
-    return crypto.subtle.importKey(
+    const importedKey = await crypto.subtle.importKey(
         'jwk',
         jwk,
         { name: ALGORITHM },
         true,
         ['encrypt', 'decrypt']
     );
+
+    cachedKey = importedKey;
+    return importedKey;
 };
 
 /**
@@ -145,3 +155,7 @@ export const decrypt = async (encryptedString) => {
 
 export const encryptData = encrypt;
 export const decryptData = decrypt;
+
+// For testing purposes only
+export const _resetCache = () => { cachedKey = null; };
+

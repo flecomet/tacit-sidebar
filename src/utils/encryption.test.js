@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encrypt, decrypt } from './encryption';
+import { encrypt, decrypt, _resetCache } from './encryption';
 
 describe('Encryption Utility', () => {
 
@@ -27,4 +27,18 @@ describe('Encryption Utility', () => {
         // Test with invalid JSON
         expect(await decrypt('{"iv":[],"data":[]}')).toBe('');
     });
+    it('should cache the key and not hit storage multiple times', async () => {
+        _resetCache();
+
+        chrome.storage.local.get.mockClear();
+
+        await encrypt('test1');
+        await encrypt('test2');
+        await encrypt('test3');
+
+        // Should be called ONLY ONCE if cached. 
+        // Currently it is NOT cached, so this test should FAIL (RED).
+        expect(chrome.storage.local.get).toHaveBeenCalledTimes(1);
+    });
 });
+
