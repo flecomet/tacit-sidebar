@@ -2,6 +2,62 @@
  * Service to interact with cloud providers APIs for model lists
  */
 
+// In-memory cache for model lists to avoid repeated API calls
+// Cache is keyed by: provider + baseUrl (hash) to detect config changes
+const modelCache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Create a cache key from provider configuration
+ */
+const getCacheKey = (provider, baseUrl, apiKey) => {
+    // Include a hash of apiKey to invalidate cache when key changes
+    // We don't store the full key for security, just use its presence/length
+    const keyIndicator = apiKey ? `key-${apiKey.length}` : 'nokey';
+    return `${provider}|${baseUrl || 'default'}|${keyIndicator}`;
+};
+
+/**
+ * Check if cached models are still valid
+ */
+const getCachedModels = (cacheKey) => {
+    const cached = modelCache.get(cacheKey);
+    if (!cached) return null;
+
+    const now = Date.now();
+    if (now - cached.timestamp > CACHE_TTL_MS) {
+        modelCache.delete(cacheKey);
+        return null;
+    }
+
+    return cached.models;
+};
+
+/**
+ * Store models in cache
+ */
+const setCachedModels = (cacheKey, models) => {
+    modelCache.set(cacheKey, {
+        models,
+        timestamp: Date.now()
+    });
+};
+
+/**
+ * Clear cache for a specific provider or all providers
+ */
+export const clearModelCache = (provider = null) => {
+    if (provider) {
+        for (const key of modelCache.keys()) {
+            if (key.startsWith(provider)) {
+                modelCache.delete(key);
+            }
+        }
+    } else {
+        modelCache.clear();
+    }
+};
+
 const sortOpenAIModels = (models) => {
     return models.sort((a, b) => {
         const idA = a.id.toLowerCase();
@@ -60,8 +116,19 @@ const sortOpenAIModels = (models) => {
 
 export const fetchModels = async (customBaseUrl, includeFreeModels = false, provider = 'openrouter', apiKey = '') => {
     try {
-        let models = [];
         const cleanProvider = (provider || 'openrouter').toLowerCase().trim();
+
+        // Check cache first
+        const cacheKey = getCacheKey(cleanProvider, customBaseUrl, apiKey);
+        const cachedModels = getCachedModels(cacheKey);
+        if (cachedModels) {
+            console.log(`[ModelService] Using cached models for ${cleanProvider}`);
+            return cachedModels;
+        }
+
+        console.log(`[ModelService] Fetching models for ${cleanProvider}...`);
+        let models = [];
+
 
         // --- Anthropic (Dynamic API) ---
         if (cleanProvider === 'anthropic') {
@@ -88,10 +155,12 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
             }));
 
             // Categorization logic for 2025 models
-            return models.map(m => ({
+            const result = models.map(m => ({
                 ...m,
                 _category: m.id.includes('haiku') ? 'Small' : 'Performance'
             }));
+            setCachedModels(cacheKey, result);
+            return result;
         }
 
         // --- Google (Generative Language API) ---
@@ -111,7 +180,9 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
                     id: m.name.replace('models/', ''),
                     name: m.displayName || m.name
                 }));
-            return models.map(m => ({ ...m, _category: m.id.includes('flash') || m.id.includes('nano') ? 'Small' : 'Performance' }));
+            const result = models.map(m => ({ ...m, _category: m.id.includes('flash') || m.id.includes('nano') ? 'Small' : 'Performance' }));
+            setCachedModels(cacheKey, result);
+            return result;
         }
 
         // --- OpenAI (Direct) ---
@@ -134,10 +205,12 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
             // Apply sorting logic to OpenAI provider too
             sortOpenAIModels(models);
 
-            return models.map(m => ({
+            const result = models.map(m => ({
                 ...m,
                 _category: getModelCategory(m)
             }));
+            setCachedModels(cacheKey, result);
+            return result;
         }
 
 
@@ -178,7 +251,9 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
         // If local, we tag them and skip the "free" filter because local models
         // don't have the same "free" semantics (they are free but private).
         if (isLocal) {
-            return models.map(m => ({ ...m, _category: 'Local' }));
+            const result = models.map(m => ({ ...m, _category: 'Local' }));
+            setCachedModels(cacheKey, result);
+            return result;
         }
 
         // Filter free models if not included (Only for OpenRouter)
@@ -191,6 +266,7 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
             });
         }
 
+        setCachedModels(cacheKey, models);
         return models;
     } catch (error) {
         console.error("Model fetch error:", error.message || "Unknown error");

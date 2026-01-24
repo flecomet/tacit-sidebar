@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchModels } from './modelService';
+import { fetchModels, clearModelCache } from './modelService';
 
 global.fetch = vi.fn();
 
 describe('modelService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        clearModelCache(); // Clear model cache between tests
     });
 
     const mockModels = [
