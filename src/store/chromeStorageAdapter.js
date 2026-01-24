@@ -1,22 +1,23 @@
 /**
  * title: Chrome Storage Adapter
  * filepath: src/store/chromeStorageAdapter.js
+ * 
+ * Note: Encryption is NOT handled here. Sensitive data (API keys) is encrypted
+ * at the application layer before storage. This adapter provides direct storage
+ * access to avoid double-encryption overhead.
  */
-
-import { encryptData, decryptData } from '../utils/encryption';
 
 export const chromeStorageAdapter = {
     getItem: async (name) => {
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
             return new Promise((resolve) => {
-                chrome.storage.local.get([name], async (result) => {
+                chrome.storage.local.get([name], (result) => {
                     const value = result[name];
                     if (!value) {
                         resolve(null);
                         return;
                     }
-                    const decrypted = await decryptData(value);
-                    resolve(decrypted);
+                    resolve(value);
                 });
             });
         }
@@ -31,9 +32,8 @@ export const chromeStorageAdapter = {
     },
     setItem: async (name, value) => {
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            const encrypted = await encryptData(value);
             return new Promise((resolve) => {
-                chrome.storage.local.set({ [name]: encrypted }, () => {
+                chrome.storage.local.set({ [name]: value }, () => {
                     resolve();
                 });
             });

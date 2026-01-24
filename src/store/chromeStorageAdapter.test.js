@@ -1,12 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { chromeStorageAdapter } from './chromeStorageAdapter';
-import * as encryption from '../utils/encryption';
-
-// Mock encryption module
-vi.mock('../utils/encryption', () => ({
-    encryptData: vi.fn(),
-    decryptData: vi.fn()
-}));
 
 describe('chromeStorageAdapter', () => {
     beforeEach(() => {
@@ -29,11 +22,8 @@ describe('chromeStorageAdapter', () => {
     });
 
     describe('setItem', () => {
-        it('should encrypt data before saving to chrome.storage.local', async () => {
+        it('should save data directly to chrome.storage.local without encryption', async () => {
             const data = { foo: 'bar' };
-            const encryptedData = '{"iv":[], "data":[]}';
-
-            encryption.encryptData.mockResolvedValue(encryptedData);
 
             // Mock set to automatically call the callback
             global.chrome.storage.local.set.mockImplementation((items, callback) => {
@@ -42,9 +32,9 @@ describe('chromeStorageAdapter', () => {
 
             await chromeStorageAdapter.setItem('test-key', data);
 
-            expect(encryption.encryptData).toHaveBeenCalledWith(data);
+            // Data should be stored directly without encryption
             expect(global.chrome.storage.local.set).toHaveBeenCalledWith(
-                { 'test-key': encryptedData },
+                { 'test-key': data },
                 expect.any(Function)
             );
         });
@@ -61,23 +51,19 @@ describe('chromeStorageAdapter', () => {
     });
 
     describe('getItem', () => {
-        it('should decrypt data retrieved from chrome.storage.local', async () => {
-            const encryptedData = '{"iv":[], "data":[]}';
-            const decryptedData = { foo: 'bar' };
+        it('should retrieve data directly from chrome.storage.local without decryption', async () => {
+            const storedData = { foo: 'bar' };
 
             // Mock get implementation
             global.chrome.storage.local.get.mockImplementation((keys, callback) => {
                 const key = keys[0];
-                callback({ [key]: encryptedData });
+                callback({ [key]: storedData });
             });
-
-            encryption.decryptData.mockResolvedValue(decryptedData);
 
             const result = await chromeStorageAdapter.getItem('test-key');
 
             expect(global.chrome.storage.local.get).toHaveBeenCalledWith(['test-key'], expect.any(Function));
-            expect(encryption.decryptData).toHaveBeenCalledWith(encryptedData);
-            expect(result).toEqual(decryptedData);
+            expect(result).toEqual(storedData);
         });
 
         it('should return null if data does not exist', async () => {
@@ -88,7 +74,6 @@ describe('chromeStorageAdapter', () => {
             const result = await chromeStorageAdapter.getItem('missing-key');
 
             expect(result).toBeNull();
-            expect(encryption.decryptData).not.toHaveBeenCalled();
         });
 
         it('should fallback to localStorage if chrome is undefined', async () => {
@@ -98,7 +83,6 @@ describe('chromeStorageAdapter', () => {
 
             const result = await chromeStorageAdapter.getItem('test-key');
 
-            // Fallback logic does NOT use decryption
             expect(result).toEqual(data);
         });
     });
