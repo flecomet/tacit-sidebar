@@ -60,7 +60,7 @@ describe('App Web Search Integration', () => {
         fireEvent.click(toggleBtn);
 
         // 2. Type Message
-        const input = screen.getByPlaceholderText('Ask...');
+        const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
         fireEvent.change(input, { target: { value: 'Who won the Super Bowl 2025?' } });
 
         // 3. Send Message

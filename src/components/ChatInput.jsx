@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, Paperclip, FileDown, ChevronDown, Star, Plus, Minus, Globe } from 'lucide-react';
 import { useChatStore } from '../store/useChatStore';
 import { useDraftStore } from '../store/useDraftStore';
+import { usePromptsStore } from '../store/usePromptsStore';
 import { getModelCategory } from '../services/modelService';
 
 export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
@@ -22,6 +23,11 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
     const [collapsedGroups, setCollapsedGroups] = useState([]);
     const [webSearchEnabled, setWebSearchEnabled] = useState(false);
     const inputRef = useRef(null);
+
+    // Prompt picker state
+    const { savedPrompts } = usePromptsStore();
+    const [showPromptPicker, setShowPromptPicker] = useState(false);
+    const [selectedPromptIndex, setSelectedPromptIndex] = useState(0);
 
     // Sync input with current model text (Name or ID) whenever model changes
     useEffect(() => {
@@ -56,7 +62,55 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
         }
     };
 
+    // Check for slash command
+    const isSlashCommand = input.startsWith('/');
+    const slashFilter = isSlashCommand ? input.slice(1).toLowerCase() : '';
+    const filteredPrompts = isSlashCommand
+        ? savedPrompts.filter(p => p.name.toLowerCase().includes(slashFilter))
+        : [];
+
+    // Show picker when slash command active and prompts exist
+    useEffect(() => {
+        if (isSlashCommand && savedPrompts.length > 0) {
+            setShowPromptPicker(true);
+            setSelectedPromptIndex(0);
+        } else {
+            setShowPromptPicker(false);
+        }
+    }, [isSlashCommand, savedPrompts.length]);
+
+    const handlePromptSelect = (prompt) => {
+        setInput(prompt.content);
+        setShowPromptPicker(false);
+    };
+
     const handleKeyDown = (e) => {
+        // Handle prompt picker navigation
+        if (showPromptPicker && filteredPrompts.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedPromptIndex(prev =>
+                    prev < filteredPrompts.length - 1 ? prev + 1 : prev
+                );
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedPromptIndex(prev => prev > 0 ? prev - 1 : prev);
+                return;
+            }
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handlePromptSelect(filteredPrompts[selectedPromptIndex]);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setShowPromptPicker(false);
+                return;
+            }
+        }
+
         if (e.key === 'Enter' && !e.shiftKey) {
             if (disabled) return;
             e.preventDefault();
@@ -410,16 +464,40 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
                     )}
                 </div>
 
-                {/* Text Input */}
-                <textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask..."
-                    className="flex-1 resize-none bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan max-h-[160px] min-h-[40px] placeholder-gray-500 overflow-y-auto"
-                    rows={1}
-                />
+                {/* Text Input with Prompt Picker */}
+                <div className="relative flex-1">
+                    {/* Prompt Picker Dropdown */}
+                    {showPromptPicker && filteredPrompts.length > 0 && (
+                        <div className="absolute bottom-full left-0 right-0 mb-1 max-h-48 bg-brand-card border border-brand-border rounded-lg shadow-lg overflow-hidden z-30">
+                            <div className="overflow-y-auto max-h-48">
+                                {filteredPrompts.map((prompt, index) => (
+                                    <div
+                                        key={prompt.id}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => handlePromptSelect(prompt)}
+                                        className={`px-3 py-2 text-sm cursor-pointer border-b border-brand-border last:border-0 ${index === selectedPromptIndex
+                                                ? 'bg-brand-cyan/20 text-white'
+                                                : 'text-gray-300 hover:bg-white/5'
+                                            }`}
+                                    >
+                                        <div className="font-medium truncate">{prompt.name}</div>
+                                        <div className="text-xs text-gray-500 truncate mt-0.5">{prompt.content.slice(0, 60)}...</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <textarea
+                        ref={textareaRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Ask... (type / for prompts)"
+                        className="w-full resize-none bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan max-h-[160px] min-h-[40px] placeholder-gray-500 overflow-y-auto"
+                        rows={1}
+                    />
+                </div>
 
                 <button
                     onClick={handleSend}

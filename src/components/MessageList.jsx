@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FileText, Download, Image as ImageIcon, Copy, Check } from 'lucide-react';
+import { FileText, Download, Image as ImageIcon, Copy, Check, Bookmark } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import { usePromptsStore } from '../store/usePromptsStore';
 
 const CopyButton = ({ text, className, iconSize = 14, label = "Copy" }) => {
     const [copied, setCopied] = useState(false);
@@ -26,6 +27,33 @@ const CopyButton = ({ text, className, iconSize = 14, label = "Copy" }) => {
             aria-label={label}
         >
             {copied ? <Check size={iconSize} className="text-green-400" /> : <Copy size={iconSize} />}
+        </button>
+    );
+};
+
+const SavePromptButton = ({ text, className, iconSize = 14 }) => {
+    const [saved, setSaved] = useState(false);
+    const { addPrompt } = usePromptsStore();
+
+    const handleSave = async (e) => {
+        e.stopPropagation();
+        try {
+            addPrompt(text);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (err) {
+            console.error('Failed to save prompt:', err);
+        }
+    };
+
+    return (
+        <button
+            onClick={handleSave}
+            className={`p-1.5 hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-white ${className}`}
+            title="Save as prompt"
+            aria-label={saved ? 'Prompt saved' : 'Save as prompt'}
+        >
+            {saved ? <Check size={iconSize} className="text-green-400" /> : <Bookmark size={iconSize} />}
         </button>
     );
 };
@@ -58,10 +86,11 @@ export default function MessageList({ messages, isLoading, onViewFile }) {
             {messages.map((m, i) => (
                 <div key={i} className={`group flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
 
-                    {/* Copy Button for User (Left side) */}
+                    {/* Copy & Save Buttons for User (Left side) */}
                     {m.role === 'user' && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity self-center mr-2 shrink-0">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity self-center mr-2 shrink-0 flex flex-col gap-1">
                             <CopyButton text={m.content} label="Copy message" />
+                            <SavePromptButton text={m.content} />
                         </div>
                     )}
 

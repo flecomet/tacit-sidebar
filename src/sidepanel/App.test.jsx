@@ -88,7 +88,7 @@ describe('App Integration', () => {
         }, { timeout: 2000 });
 
         // 2. Type message
-        const input = screen.getByPlaceholderText('Ask...');
+        const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
         fireEvent.change(input, { target: { value: 'Hello' } });
 
         // 3. Send
@@ -137,7 +137,7 @@ describe('App Integration', () => {
         fireEvent.click(closeBtn);
 
         // 5. Type and Send
-        const input = screen.getByPlaceholderText('Ask...');
+        const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
         fireEvent.change(input, { target: { value: 'Hello Local' } });
         const sendBtn = screen.getByRole('button', { name: /send/i });
         fireEvent.click(sendBtn);
@@ -284,7 +284,7 @@ describe('App Integration', () => {
         }, { timeout: 2000 });
 
         // Send Message
-        const input = screen.getByPlaceholderText('Ask...');
+        const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
         fireEvent.change(input, { target: { value: 'Hi Claude' } });
         const sendBtn = screen.getByRole('button', { name: /send/i });
         fireEvent.click(sendBtn);
@@ -317,7 +317,7 @@ describe('App Integration', () => {
         render(<App />);
 
         // 2. Start Chat A
-        const input = screen.getByPlaceholderText('Ask...');
+        const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
         fireEvent.change(input, { target: { value: 'Q1' } });
         const sendBtn = screen.getByRole('button', { name: /send/i });
         fireEvent.click(sendBtn);
@@ -332,7 +332,7 @@ describe('App Integration', () => {
         expect(screen.queryByLabelText('Thinking...')).toBeNull();
 
         // 5. Verify Chat B input is enabled
-        const inputB = screen.getByPlaceholderText('Ask...');
+        const inputB = screen.getByPlaceholderText('Ask... (type / for prompts)');
         expect(inputB.disabled).toBe(false);
 
         // Clean up
