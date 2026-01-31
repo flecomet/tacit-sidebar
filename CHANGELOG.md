@@ -5,6 +5,16 @@ All notable changes to Tacit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-31
+
+### Added
+
+- **Saved Prompts Shortcuts** - Save frequently used prompts and quickly insert them using the `/` command
+  - Bookmark icon on user messages to save as prompt
+  - Type `/` in chat to open prompt picker
+  - Filter, navigate with arrow keys, select with Enter
+  - Prompts persist locally using encrypted storage
+
 ## [1.0.2] - 2026-01-24
 
 ### Performance
