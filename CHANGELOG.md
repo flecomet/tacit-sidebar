@@ -5,6 +5,22 @@ All notable changes to Tacit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-31
+
+### Added
+
+- **Fuzzy History Search** - Search across session titles and message content with case-insensitive fuzzy matching
+- **Skeleton Loader** - Left-to-right shimmer animation during loading with image variant for image models
+- **Collapsible Messages** - Messages over 100 characters can be collapsed/expanded with hover buttons
+- **Cost Color Coding** - Visual pricing tiers (green→red) for OpenRouter model costs
+- **Stop Button** - Cancel in-progress requests with proper server-side stream cancellation
+- **Edit & Regenerate** - Edit user messages and regenerate responses from that point
+- **Larger Font** - Increased message font size from 13px to 15px for better readability
+
+### Fixed
+
+- **Stream Cancellation Billing** - OpenRouter requests now use streaming, enabling proper cancellation that stops billing
+
 ## [1.1.0] - 2026-01-31
 
 ### Added
