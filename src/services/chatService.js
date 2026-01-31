@@ -502,7 +502,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
 
         const systemMessage = messages.find(m => m.role === 'system');
 
-        const { webSearch, ...generationConfig } = options;
+        const { webSearch, webSearchConfig, ...generationConfig } = options;
 
         const payload = {
             contents: contents,
