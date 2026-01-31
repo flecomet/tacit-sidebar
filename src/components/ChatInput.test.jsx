@@ -563,4 +563,58 @@ describe('ChatInput Component', () => {
             expect(setDraftMock).toHaveBeenCalledWith('Summarize the following text');
         });
     });
+
+    // Stop Button Tests
+    describe('Stop Button', () => {
+        beforeEach(() => {
+            useDraftStore.mockReturnValue({
+                draft: 'Hello',
+                setDraft: vi.fn()
+            });
+            useChatStore.mockReturnValue({
+                model: 'anthropic/claude-4-sonnet',
+                setModel: vi.fn(),
+                availableModels: [{ id: 'anthropic/claude-4-sonnet', name: 'Claude 4 Sonnet' }],
+                favorites: [],
+                toggleFavorite: vi.fn()
+            });
+            usePromptsStore.mockReturnValue({
+                savedPrompts: []
+            });
+        });
+
+        it('should show send button when not loading', () => {
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} isLoading={false} />);
+
+            const sendBtn = screen.getByLabelText('Send');
+            expect(sendBtn).toBeDefined();
+            expect(screen.queryByLabelText('Stop')).toBeNull();
+        });
+
+        it('should show stop button instead of send when loading', () => {
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} isLoading={true} onStop={vi.fn()} />);
+
+            const stopBtn = screen.getByLabelText('Stop');
+            expect(stopBtn).toBeDefined();
+            expect(screen.queryByLabelText('Send')).toBeNull();
+        });
+
+        it('should call onStop when stop button is clicked', async () => {
+            const onStopMock = vi.fn();
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} isLoading={true} onStop={onStopMock} />);
+
+            const stopBtn = screen.getByLabelText('Stop');
+            fireEvent.click(stopBtn);
+
+            expect(onStopMock).toHaveBeenCalled();
+        });
+
+        it('should style stop button with distinct styling', () => {
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} isLoading={true} onStop={vi.fn()} />);
+
+            const stopBtn = screen.getByLabelText('Stop');
+            // Stop button should have distinct styling (gray/subtle per design)
+            expect(stopBtn.className).toContain('bg-gray-700');
+        });
+    });
 });

@@ -40,14 +40,36 @@ describe('App Integration', () => {
             providerMode: 'cloud'
         });
 
-        global.fetch.mockResolvedValue({
-            ok: true,
-            text: () => Promise.resolve(JSON.stringify({
-                choices: [{ message: { content: 'AI Response' } }]
-            })),
-            json: async () => ({
-                choices: [{ message: { content: 'AI Response' } }]
-            })
+        // Mock fetch with streaming support for OpenRouter
+        global.fetch.mockImplementation(() => {
+            // Create a mock SSE stream
+            const sseData = 'data: {"choices":[{"delta":{"content":"AI Response"}}]}\n\ndata: {"usage":{"total_tokens":10}}\n\ndata: [DONE]\n';
+            const encoder = new TextEncoder();
+            const encoded = encoder.encode(sseData);
+            let position = 0;
+
+            return Promise.resolve({
+                ok: true,
+                body: {
+                    getReader: () => ({
+                        read: () => {
+                            if (position < encoded.length) {
+                                const chunk = encoded.slice(position);
+                                position = encoded.length;
+                                return Promise.resolve({ done: false, value: chunk });
+                            }
+                            return Promise.resolve({ done: true, value: undefined });
+                        },
+                        cancel: () => Promise.resolve()
+                    })
+                },
+                text: () => Promise.resolve(JSON.stringify({
+                    choices: [{ message: { content: 'AI Response' } }]
+                })),
+                json: async () => ({
+                    choices: [{ message: { content: 'AI Response' } }]
+                })
+            });
         });
     });
 

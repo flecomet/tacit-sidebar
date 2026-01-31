@@ -15,3 +15,24 @@ body {
     width: 100%;
     overflow: hidden;
 }
+
+/* Skeleton shimmer animation - left to right gradient sweep */
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        oklch(0.22 0.02 264) 0%,
+        oklch(0.28 0.02 264) 50%,
+        oklch(0.22 0.02 264) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}

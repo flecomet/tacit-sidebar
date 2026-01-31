@@ -233,6 +233,33 @@ export const useChatStore = create(
                 return { sessions: newSessions };
             }),
 
+            // Truncate messages at and after the specified index (for edit/regenerate)
+            truncateAtMessage: (sessionId, messageIndex) => set((state) => {
+                let newSessions = [...state.sessions];
+                const index = newSessions.findIndex(s => s.id === sessionId);
+
+                if (index === -1) return {};
+
+                const currentSession = newSessions[index];
+                const truncatedMessages = currentSession.messages.slice(0, messageIndex);
+
+                newSessions[index] = {
+                    ...currentSession,
+                    messages: truncatedMessages,
+                    updatedAt: Date.now()
+                };
+
+                // If currently active, also update the 'messages' pointer
+                if (state.currentSessionId === sessionId) {
+                    return {
+                        sessions: newSessions,
+                        messages: truncatedMessages
+                    };
+                }
+
+                return { sessions: newSessions };
+            }),
+
             reset: () => set({
                 encryptedApiKeys: { openrouter: '', openai: '', anthropic: '', google: '' },
                 messages: [],
