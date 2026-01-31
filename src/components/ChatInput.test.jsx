@@ -5,7 +5,7 @@ import { useChatStore } from '../store/useChatStore';
 import { useDraftStore } from '../store/useDraftStore';
 import * as modelService from '../services/modelService';
 
-// Mock the store
+// Mock the stores
 vi.mock('../store/useChatStore', () => ({
     useChatStore: vi.fn(),
 }));
@@ -14,11 +14,17 @@ vi.mock('../store/useDraftStore', () => ({
     useDraftStore: vi.fn(),
 }));
 
+vi.mock('../store/usePromptsStore', () => ({
+    usePromptsStore: vi.fn()
+}));
+
 // Mock model service
 vi.mock('../services/modelService', () => ({
     fetchModels: vi.fn(),
     getModelCategory: vi.fn(() => 'Performance')
 }));
+
+import { usePromptsStore } from '../store/usePromptsStore';
 
 describe('ChatInput Component', () => {
     let setModelMock;
@@ -46,6 +52,10 @@ describe('ChatInput Component', () => {
         useDraftStore.mockReturnValue({
             draft: '',
             setDraft: vi.fn()
+        });
+
+        usePromptsStore.mockReturnValue({
+            savedPrompts: []
         });
     });
 
@@ -166,7 +176,7 @@ describe('ChatInput Component', () => {
 
     it('should render standard chat inputs (textarea, buttons)', () => {
         render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
-        expect(screen.getByPlaceholderText('Ask...')).toBeDefined();
+        expect(screen.getByPlaceholderText('Ask... (type / for prompts)')).toBeDefined();
         expect(screen.getByRole('button', { name: /send/i })).toBeDefined();
     });
     it('should call onUpload and reset input value when a file is selected', () => {
@@ -402,5 +412,155 @@ describe('ChatInput Component', () => {
         fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
 
         expect(onSendMock).not.toHaveBeenCalled();
+    });
+
+    // Slash Command Prompt Picker Tests
+    describe('Prompt Picker (/ Command)', () => {
+        beforeEach(() => {
+            usePromptsStore.mockReturnValue({
+                savedPrompts: [
+                    { id: '1', name: 'Summarize', content: 'Summarize the following text' },
+                    { id: '2', name: 'Translate', content: 'Translate this to French' },
+                    { id: '3', name: 'Code Review', content: 'Review this code for bugs' }
+                ]
+            });
+        });
+
+        it('should show prompt picker when input starts with /', async () => {
+            const setDraftMock = vi.fn();
+            useDraftStore.mockReturnValue({
+                draft: '/',
+                setDraft: setDraftMock
+            });
+
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Prompt picker should appear
+            await waitFor(() => {
+                expect(screen.getByText('Summarize')).toBeDefined();
+                expect(screen.getByText('Translate')).toBeDefined();
+                expect(screen.getByText('Code Review')).toBeDefined();
+            });
+        });
+
+        it('should filter prompts as user types after /', async () => {
+            const setDraftMock = vi.fn();
+            useDraftStore.mockReturnValue({
+                draft: '/sum',
+                setDraft: setDraftMock
+            });
+
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Summarize')).toBeDefined();
+                expect(screen.queryByText('Translate')).toBeNull();
+                expect(screen.queryByText('Code Review')).toBeNull();
+            });
+        });
+
+        it('should insert prompt content when prompt is selected', async () => {
+            const setDraftMock = vi.fn();
+            useDraftStore.mockReturnValue({
+                draft: '/',
+                setDraft: setDraftMock
+            });
+
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Click on a prompt
+            const translateOption = await screen.findByText('Translate');
+            fireEvent.click(translateOption);
+
+            // Should replace input with prompt content
+            expect(setDraftMock).toHaveBeenCalledWith('Translate this to French');
+        });
+
+        it('should close picker on Escape key', async () => {
+            const setDraftMock = vi.fn();
+            useDraftStore.mockReturnValue({
+                draft: '/',
+                setDraft: setDraftMock
+            });
+
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Wait for picker to appear
+            await screen.findByText('Summarize');
+
+            // Press Escape
+            const textarea = screen.getByRole('textbox');
+            fireEvent.keyDown(textarea, { key: 'Escape' });
+
+            // Picker should be hidden
+            await waitFor(() => {
+                expect(screen.queryByText('Summarize')).toBeNull();
+            });
+        });
+
+        it('should hide picker when / is removed', async () => {
+            const setDraftMock = vi.fn();
+            useDraftStore.mockReturnValue({
+                draft: '/',
+                setDraft: setDraftMock
+            });
+
+            const { rerender } = render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Wait for picker to appear
+            await screen.findByText('Summarize');
+
+            // Update draft to not start with /
+            useDraftStore.mockReturnValue({
+                draft: 'hello',
+                setDraft: setDraftMock
+            });
+
+            rerender(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Picker should be hidden
+            await waitFor(() => {
+                expect(screen.queryByText('Summarize')).toBeNull();
+            });
+        });
+
+        it('should not show picker when no saved prompts exist', async () => {
+            usePromptsStore.mockReturnValue({
+                savedPrompts: []
+            });
+
+            useDraftStore.mockReturnValue({
+                draft: '/',
+                setDraft: vi.fn()
+            });
+
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Should show "no prompts" message or nothing
+            await waitFor(() => {
+                const picker = screen.queryByText('Summarize');
+                expect(picker).toBeNull();
+            });
+        });
+
+        it('should select prompt with Enter key', async () => {
+            const setDraftMock = vi.fn();
+            useDraftStore.mockReturnValue({
+                draft: '/sum',
+                setDraft: setDraftMock
+            });
+
+            render(<ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} />);
+
+            // Wait for picker to show filtered prompt
+            await screen.findByText('Summarize');
+
+            // Press Enter (first item should be selected)
+            const textarea = screen.getByRole('textbox');
+            fireEvent.keyDown(textarea, { key: 'Enter' });
+
+            // Should insert the prompt
+            expect(setDraftMock).toHaveBeenCalledWith('Summarize the following text');
+        });
     });
 });

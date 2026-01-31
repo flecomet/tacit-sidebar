@@ -1,8 +1,25 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import MessageList from './MessageList';
 
+// Mock the prompts store
+vi.mock('../store/usePromptsStore', () => ({
+    usePromptsStore: vi.fn()
+}));
+
+import { usePromptsStore } from '../store/usePromptsStore';
+
 describe('MessageList', () => {
+    let addPromptMock;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        addPromptMock = vi.fn();
+        usePromptsStore.mockReturnValue({
+            addPrompt: addPromptMock
+        });
+    });
+
     it('should show empty state when there are no messages', () => {
         render(<MessageList messages={[]} />);
         expect(screen.getByText('No messages yet.')).toBeDefined();
@@ -62,5 +79,53 @@ describe('MessageList', () => {
         const img = screen.getByAltText('http-img');
         expect(img).toBeDefined();
         expect(img.getAttribute('src')).toBe('http://example.com/img.png');
+    });
+
+    // Save Prompt Button Tests
+    describe('Save Prompt Button', () => {
+        it('should show save prompt button on user messages', () => {
+            const messages = [{ role: 'user', content: 'Save this prompt' }];
+            render(<MessageList messages={messages} />);
+
+            const saveBtn = screen.getByTitle('Save as prompt');
+            expect(saveBtn).toBeDefined();
+        });
+
+        it('should NOT show save prompt button on assistant messages', () => {
+            const messages = [{ role: 'assistant', content: 'AI response' }];
+            render(<MessageList messages={messages} />);
+
+            const saveBtn = screen.queryByTitle('Save as prompt');
+            expect(saveBtn).toBeNull();
+        });
+
+        it('should call addPrompt with message content when save button clicked', async () => {
+            const content = 'This prompt should be saved';
+            const messages = [{ role: 'user', content }];
+            render(<MessageList messages={messages} />);
+
+            const saveBtn = screen.getByTitle('Save as prompt');
+            await act(async () => {
+                fireEvent.click(saveBtn);
+            });
+
+            expect(addPromptMock).toHaveBeenCalledWith(content);
+        });
+
+        it('should show checkmark icon briefly after saving', async () => {
+            const messages = [{ role: 'user', content: 'Test prompt' }];
+            render(<MessageList messages={messages} />);
+
+            const saveBtn = screen.getByTitle('Save as prompt');
+
+            await act(async () => {
+                fireEvent.click(saveBtn);
+            });
+
+            // After click, should show checkmark (via aria-label or visual change)
+            await waitFor(() => {
+                expect(screen.getByLabelText('Prompt saved')).toBeDefined();
+            });
+        });
     });
 });
