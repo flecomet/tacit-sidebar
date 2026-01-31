@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Lock, X, Plus, Menu, ChevronDown } from 'lucide-react';
 import HistorySidebar from '../components/HistorySidebar';
 import ChatInput from '../components/ChatInput';
@@ -24,7 +24,8 @@ export default function App() {
         includeFreeModels, setIncludeFreeModels,
         providerMode, setProviderMode,
         localBaseUrl, setLocalBaseUrl,
-        webSearchConfig, setWebSearchConfig
+        webSearchConfig, setWebSearchConfig,
+        truncateAtMessage, currentSessionId: storeSessionId
     } = useChatStore();
 
     // Local UI state
@@ -43,6 +44,7 @@ export default function App() {
 
     const [isDragging, setIsDragging] = useState(false);
     const [viewingFile, setViewingFile] = useState(null);
+    const abortControllerRef = useRef(null);
 
     // Derived loading state for current view
     const currentSessionId = useChatStore(state => state.currentSessionId);
@@ -326,6 +328,10 @@ export default function App() {
             const startTime = Date.now();
             let baseUrl = isLocal ? (localBaseUrl || 'http://localhost:11434/v1') : customBaseUrl;
 
+            // Create AbortController for this request
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
+
             // Prepare Web Search Config with Decrypted Key
             let activeWebSearchConfig = null;
             if (options.webSearch && providerMode === 'local') {
@@ -351,16 +357,19 @@ export default function App() {
             }
 
             // Use unified chat service
+            // IMPORTANT: Read fresh messages from store to handle edit/regenerate correctly
+            const currentMessages = useChatStore.getState().messages;
             const response = await chatService.sendMessage({
                 provider: provider,
                 baseUrl: baseUrl,
                 apiKey: apiKey,
                 model: model,
-                messages: messages.concat(userMsg),
+                messages: currentMessages.concat(userMsg),
                 options: {
                     ...options,
                     webSearchConfig: activeWebSearchConfig // Pass decrypted config
-                }
+                },
+                signal: controller.signal
             });
 
             const endTime = Date.now();
@@ -401,11 +410,41 @@ export default function App() {
             return true;
 
         } catch (err) {
+            // Don't show error for user-initiated abort
+            if (err.name === 'AbortError') {
+                console.log('[App] Request aborted by user');
+                return false;
+            }
             addMessage({ role: 'system', content: `Error: ${err.message}` });
             return false;
         } finally {
+            abortControllerRef.current = null;
             setLoadingSessionIds(prev => prev.filter(id => id !== initiatingSessionId));
         }
+    };
+
+    // Stop current generation
+    const handleStop = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+    };
+
+    // Edit message and regenerate
+    const handleEditMessage = async (messageIndex, newContent) => {
+        const sessionId = useChatStore.getState().currentSessionId;
+
+        // Truncate messages at the edit point
+        truncateAtMessage(sessionId, messageIndex);
+
+        // Clear current attachments since we're regenerating from edited text
+        setAttachments([]);
+
+        // Send the edited message using fresh messages from the store
+        // (The truncateAtMessage already updated the store, so handleSend's 
+        // messages.concat(userMsg) will use the truncated list)
+        await handleSend(newContent);
     };
 
     return (
@@ -706,7 +745,9 @@ export default function App() {
             <MessageList
                 messages={messages}
                 isLoading={isCurrentSessionLoading}
+                isImageModel={/flux|dall-?e|stable.?diffusion|imagen|midjourney|banana|image/i.test(model)}
                 onViewFile={setViewingFile}
+                onEditMessage={handleEditMessage}
             />
 
             {/* Attachment Preview */}
@@ -735,6 +776,7 @@ export default function App() {
             {/* Input Area */}
             <ChatInput
                 onSend={handleSend}
+                onStop={handleStop}
                 onUpload={handleFileUpload}
                 onReadPage={handleReadPage}
                 isLoading={isCurrentSessionLoading}

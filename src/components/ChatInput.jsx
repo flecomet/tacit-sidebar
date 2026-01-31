@@ -1,12 +1,12 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Paperclip, FileDown, ChevronDown, Star, Plus, Minus, Globe } from 'lucide-react';
+import { Send, Square, Paperclip, FileDown, ChevronDown, Star, Plus, Minus, Globe } from 'lucide-react';
 import { useChatStore } from '../store/useChatStore';
 import { useDraftStore } from '../store/useDraftStore';
 import { usePromptsStore } from '../store/usePromptsStore';
 import { getModelCategory } from '../services/modelService';
 
-export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
+export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
     const {
         model, setModel, availableModels, favorites, toggleFavorite,
     } = useChatStore();
@@ -476,8 +476,8 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
                                         onMouseDown={(e) => e.preventDefault()}
                                         onClick={() => handlePromptSelect(prompt)}
                                         className={`px-3 py-2 text-sm cursor-pointer border-b border-brand-border last:border-0 ${index === selectedPromptIndex
-                                                ? 'bg-brand-cyan/20 text-white'
-                                                : 'text-gray-300 hover:bg-white/5'
+                                            ? 'bg-brand-cyan/20 text-white'
+                                            : 'text-gray-300 hover:bg-white/5'
                                             }`}
                                     >
                                         <div className="font-medium truncate">{prompt.name}</div>
@@ -499,14 +499,25 @@ export default function ChatInput({ onSend, onUpload, onReadPage, isLoading, dis
                     />
                 </div>
 
-                <button
-                    onClick={handleSend}
-                    disabled={!input.trim() || disabled}
-                    className="p-2 bg-brand-cyan text-brand-dark rounded-lg hover:opacity-90 disabled:bg-brand-input disabled:text-gray-500 transition-all shadow-sm active:scale-95"
-                    aria-label="Send"
-                >
-                    <Send size={18} />
-                </button>
+                {isLoading && onStop ? (
+                    <button
+                        onClick={onStop}
+                        className="p-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-all shadow-sm active:scale-95 border border-gray-600"
+                        aria-label="Stop"
+                        title="Stop generation"
+                    >
+                        <Square size={16} fill="currentColor" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleSend}
+                        disabled={!input.trim() || disabled}
+                        className="p-2 bg-brand-cyan text-brand-dark rounded-lg hover:opacity-90 disabled:bg-brand-input disabled:text-gray-500 transition-all shadow-sm active:scale-95"
+                        aria-label="Send"
+                    >
+                        <Send size={18} />
+                    </button>
+                )}
             </div>
         </div>
     );

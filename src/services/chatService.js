@@ -19,24 +19,24 @@ export const chatService = {
      * @param {Object} [params.options] - Extra options (temperature, etc.)
      * @returns {Promise<Object>} - { content: string, usage: object }
      */
-    async sendMessage({ provider, baseUrl, apiKey, model, messages, options = {} }) {
+    async sendMessage({ provider, baseUrl, apiKey, model, messages, options = {}, signal }) {
         console.log(`[ChatService] Sending message via ${provider} to ${model}`);
 
         switch (provider) {
             case 'anthropic':
-                return this.sendAnthropic({ baseUrl, apiKey, model, messages, options });
+                return this.sendAnthropic({ baseUrl, apiKey, model, messages, options, signal });
             case 'google':
-                return this.sendGoogle({ baseUrl, apiKey, model, messages, options });
+                return this.sendGoogle({ baseUrl, apiKey, model, messages, options, signal });
             case 'openai':
             case 'openrouter':
             case 'local':
             default:
-                return this.sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options });
+                return this.sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options, signal });
         }
     },
 
     // --- OpenAI / OpenRouter / Local Adapter ---
-    async sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options }) {
+    async sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options, signal }) {
         // OpenRouter Free Model Check
         if (provider === 'openrouter' && model.endsWith(':free') && options.webSearch) {
             console.warn('[ChatService] Web search requested for free model, disabling to avoid error.');
@@ -116,11 +116,18 @@ export const chatService = {
             payload.plugins = [{ id: "web" }];
         }
 
+        // Enable streaming for OpenRouter to support proper cancellation
+        // When streaming is enabled, aborting the connection stops billing
+        const useStreaming = provider === 'openrouter' && signal;
+        if (useStreaming) {
+            payload.stream = true;
+        }
 
         const response = await fetch(url, {
             method: "POST",
             headers,
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal
         });
 
         if (!response.ok) {
@@ -134,6 +141,11 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             }
 
             throw new Error(`API Error ${response.status}: ${errText || response.statusText}`);
+        }
+
+        // Handle streaming response for OpenRouter
+        if (useStreaming) {
+            return await this.parseStreamResponse(response, signal);
         }
 
         const text = await response.text();
@@ -260,6 +272,90 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         };
     },
 
+    // --- Parse SSE Stream Response ---
+    async parseStreamResponse(response) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let content = '';
+        let usage = { total_tokens: 0 };
+        const attachments = [];
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                // Process complete lines from buffer
+                while (true) {
+                    const lineEnd = buffer.indexOf('\n');
+                    if (lineEnd === -1) break;
+
+                    const line = buffer.slice(0, lineEnd).trim();
+                    buffer = buffer.slice(lineEnd + 1);
+
+                    // Skip comments (OpenRouter processing indicators)
+                    if (line.startsWith(':')) continue;
+
+                    if (line.startsWith('data: ')) {
+                        const data = line.slice(6);
+                        if (data === '[DONE]') break;
+
+                        try {
+                            const parsed = JSON.parse(data);
+
+                            // Check for streaming error
+                            if (parsed.error) {
+                                throw new Error(parsed.error.message || 'Stream error');
+                            }
+
+                            // Accumulate content from delta
+                            const delta = parsed.choices?.[0]?.delta?.content;
+                            if (delta) {
+                                content += delta;
+                            }
+
+                            // Capture usage from final chunk
+                            if (parsed.usage) {
+                                usage = parsed.usage;
+                            }
+                        } catch (e) {
+                            if (e.message !== 'Stream error') {
+                                // Ignore JSON parse errors for malformed chunks
+                            } else {
+                                throw e;
+                            }
+                        }
+                    }
+                }
+            }
+        } finally {
+            reader.cancel();
+        }
+
+        // Scan content for markdown images
+        const markdownImageRegex = /!\[.*?\]\((.*?)\)/g;
+        let match;
+        while ((match = markdownImageRegex.exec(content)) !== null) {
+            const url = match[1];
+            if (!attachments.some(a => a.url === url)) {
+                attachments.push({
+                    type: 'image',
+                    url: url,
+                    name: 'generated_image.png'
+                });
+            }
+        }
+
+        return {
+            content: content,
+            attachments: attachments,
+            usage: usage
+        };
+    },
+
     // --- OpenAI Responses API (Web Search) ---
     async sendOpenAIResponses({ baseUrl, apiKey, model, messages, options }) {
         const url = `${baseUrl.replace(/\/$/, '')}/responses`;
@@ -351,7 +447,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
     },
 
     // --- Anthropic Adapter ---
-    async sendAnthropic({ baseUrl, apiKey, model, messages, options }) {
+    async sendAnthropic({ baseUrl, apiKey, model, messages, options, signal }) {
         const url = `${(baseUrl || 'https://api.anthropic.com').replace(/\/$/, '')}/v1/messages`;
 
         // Filter out system messages, they go to top-level parameter
@@ -426,7 +522,8 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         const response = await fetch(url, {
             method: "POST",
             headers,
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal
         });
 
         const data = await response.json();
@@ -458,7 +555,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
     },
 
     // --- Google Gemini Adapter ---
-    async sendGoogle({ baseUrl, apiKey, model, messages, options }) {
+    async sendGoogle({ baseUrl, apiKey, model, messages, options, signal }) {
         // https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=YOUR_API_KEY
 
         // Default URL if not provided or custom
@@ -526,7 +623,8 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal
         });
 
         if (!response.ok) {

@@ -10,8 +10,18 @@ export default {
         extend: {
             colors: {
                 brand: colors.brand,
-                gray: colors.gray // Override default gray with our tinted scale
-            }
+                gray: colors.gray, // Override default gray with our tinted scale
+                cost: colors.cost  // Semantic cost colors
+            },
+            animation: {
+                shimmer: 'shimmer 1.5s ease-in-out infinite',
+            },
+            keyframes: {
+                shimmer: {
+                    '0%': { backgroundPosition: '-200% 0' },
+                    '100%': { backgroundPosition: '200% 0' },
+                },
+            },
         },
     },
     plugins: [],

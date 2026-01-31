@@ -37,6 +37,16 @@ export const colors = {
         800: 'oklch(0.30 0.03 264 / <alpha-value>)',
         900: 'oklch(0.20 0.025 264 / <alpha-value>)',
         950: 'oklch(0.14 0.025 264 / <alpha-value>)',
+    },
+
+    // Semantic Cost Colors
+    // Used to indicate pricing tiers visually
+    cost: {
+        cheap: 'oklch(0.75 0.15 145 / <alpha-value>)',      // Green - very affordable
+        moderate: 'oklch(0.70 0.12 250 / <alpha-value>)',   // Blue - reasonable
+        elevated: 'oklch(0.75 0.15 85 / <alpha-value>)',    // Yellow - getting pricey
+        expensive: 'oklch(0.70 0.16 50 / <alpha-value>)',   // Orange - expensive
+        extreme: 'oklch(0.65 0.20 25 / <alpha-value>)',     // Red - very expensive
     }
 };
 
