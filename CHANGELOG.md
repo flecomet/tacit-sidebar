@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Stream Cancellation Billing** - OpenRouter requests now use streaming, enabling proper cancellation that stops billing
 
+### Dependencies
+
+- Bump `lucide-react` from 0.436.0 to 0.577.0
+- Bump `postcss` from 8.5.6 to 8.5.8
+- Bump `autoprefixer` from 10.4.23 to 10.4.27
+- Bump `dotenv` from 17.2.3 to 17.3.1
+
 ## [1.1.0] - 2026-01-31
 
 ### Added
