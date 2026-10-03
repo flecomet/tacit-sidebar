@@ -4,6 +4,7 @@ import { useChatStore } from '../store/useChatStore';
 
 // Access the API key from environment variables
 const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+const baseUrl = import.meta.env.VITE_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
 
 // Conditional execution wrapper: Only run if API key is present
 const describeIntegration = apiKey ? describe : describe.skip;
@@ -32,9 +33,13 @@ describeIntegration('OpenRouter Real API Integration', () => {
     });
 
     it('should receive a response from chat completions endpoint', async () => {
-        // Using a standard paid/free-tier friendly model.
-        // Confirmed available via logs: 'google/gemini-3-flash-preview'
-        const modelToUse = "google/gemini-3-flash-preview";
+        // Pick from the live list so the test never pins a retired model id.
+        const models = await fetchModels(baseUrl, false, 'openrouter', apiKey);
+        const paidText = models
+            // Skip variant ids (':batch', ':free', ...): batch variants reject chat/completions.
+            .filter(m => !m.id.includes(':') && m.architecture?.output_modalities?.includes('text') && Number(m.pricing?.prompt) > 0)
+            .sort((a, b) => Number(a.pricing.prompt) - Number(b.pricing.prompt));
+        const modelToUse = (paidText.find(m => /gemini.*flash/.test(m.id)) || paidText[0]).id;
 
         const payload = {
             model: modelToUse,
@@ -43,7 +48,7 @@ describeIntegration('OpenRouter Real API Integration', () => {
             ]
         };
 
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        const response = await fetch(`${baseUrl}/chat/completions`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${apiKey}`,
