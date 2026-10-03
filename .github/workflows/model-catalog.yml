@@ -1,0 +1,63 @@
+name: Model catalog refresh
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      # Fails the job (pipefail) if any provider request fails, before anything is committed.
+      - name: Fetch live model lists
+        shell: bash
+        env:
+          VITE_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VITE_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: node scripts/check-models.mjs --write-fixtures | tee "$RUNNER_TEMP/model-report.txt"
+
+      # A failure here is the signal the PR exists for, so it must not stop the PR.
+      - name: Run catalog tests against the new fixtures
+        id: tests
+        continue-on-error: true
+        shell: bash
+        run: npx vitest run src/services/modelCatalog.test.js 2>&1 | tee "$RUNNER_TEMP/test-report.txt"
+
+      - name: Build PR body
+        shell: bash
+        run: |
+          {
+            echo "Weekly refresh of \`src/services/__fixtures__/\` from each provider's \`/models\` endpoint."
+            echo
+            echo "Catalog tests: **${{ steps.tests.outcome }}**. A failure means a pinned id in \`modelCatalog.test.js\` was retired, or a new product type needs a regex edit in \`src/services/modelCatalog.js\`. Check the \"new since fixture\" lines below."
+            echo
+            echo '```'; cat "$RUNNER_TEMP/model-report.txt"; echo '```'
+            echo
+            echo '```'; tail -40 "$RUNNER_TEMP/test-report.txt"; echo '```'
+          } > "$RUNNER_TEMP/pr-body.md"
+          cat "$RUNNER_TEMP/pr-body.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # Opens or updates one PR; does nothing when the fixtures did not change.
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/model-catalog-refresh
+          add-paths: src/services/__fixtures__/*.json
+          commit-message: 'chore(models): refresh provider model fixtures'
+          title: 'chore(models): refresh provider model fixtures'
+          body-path: ${{ runner.temp }}/pr-body.md
+          delete-branch: true
