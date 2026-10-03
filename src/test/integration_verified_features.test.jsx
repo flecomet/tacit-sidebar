@@ -40,7 +40,7 @@ describe('Verified Features Integration', () => {
                 model: 'anthropic/claude-4-sonnet',
                 providerMode: 'cloud',
                 encryptedApiKey: '',
-                customBaseUrl: '',
+                customBaseUrls: { openrouter: '', openai: '' },
                 includeFreeModels: false
             });
         });

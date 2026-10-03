@@ -8,7 +8,7 @@ import { processFile } from '../utils/fileProcessor';
 import { scrapePage } from '../utils/pageScraper';
 import { fetchModels } from '../services/modelService';
 import { chatService } from '../services/chatService';
-import { supportsImageInput } from '../services/modelCatalog';
+import { supportsImageInput, OPENROUTER_EU_BASE_URL } from '../services/modelCatalog';
 import { encryptData, decryptData } from '../utils/encryption';
 import DocViewerModal from '../components/DocViewerModal';
 
@@ -21,13 +21,16 @@ export default function App() {
         availableModels, setAvailableModels,
         ensureActiveSession,
 
-        customBaseUrl, setCustomBaseUrl,
+        customBaseUrls, setCustomBaseUrl,
         includeFreeModels, setIncludeFreeModels,
         providerMode, setProviderMode,
         localBaseUrl, setLocalBaseUrl,
         webSearchConfig, setWebSearchConfig,
         truncateAtMessage, currentSessionId: storeSessionId
     } = useChatStore();
+
+    const activeCustomBaseUrl = customBaseUrls?.[activeCloudProvider] || '';
+    const baseUrlEditProvider = useRef(null); // provider whose endpoint the user is editing
 
     // Local UI state
     const [showSettings, setShowSettings] = useState(false);
@@ -72,12 +75,13 @@ export default function App() {
                         setTempKey('');
                     }
                 }
-                setTempBaseUrl(customBaseUrl || '');
+                baseUrlEditProvider.current = null;
+                setTempBaseUrl(activeCustomBaseUrl);
                 setTempLocalUrl(localBaseUrl || '');
             }
         };
         loadKey();
-    }, [showSettings, activeCloudProvider, providerMode, encryptedApiKeys, customBaseUrl, localBaseUrl]);
+    }, [showSettings, activeCloudProvider, providerMode, encryptedApiKeys, activeCustomBaseUrl, localBaseUrl]);
 
     // Load Search Keys
     useEffect(() => {
@@ -113,13 +117,15 @@ export default function App() {
 
     // Auto-save effects with debounce
     useEffect(() => {
+        const target = baseUrlEditProvider.current;
+        if (!target) return; // persist only user edits, never a value loaded for another provider
         const timer = setTimeout(() => {
-            if (customBaseUrl !== tempBaseUrl) {
-                setCustomBaseUrl(tempBaseUrl);
+            if ((customBaseUrls?.[target] || '') !== tempBaseUrl) {
+                setCustomBaseUrl(target, tempBaseUrl);
             }
         }, 500);
         return () => clearTimeout(timer);
-    }, [tempBaseUrl, customBaseUrl, setCustomBaseUrl]);
+    }, [tempBaseUrl, customBaseUrls, setCustomBaseUrl]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -222,7 +228,7 @@ export default function App() {
         const loadModels = async () => {
             const isLocal = providerMode === 'local';
             const provider = isLocal ? 'local' : activeCloudProvider;
-            const urlToUse = isLocal ? localBaseUrl : customBaseUrl;
+            const urlToUse = isLocal ? localBaseUrl : activeCustomBaseUrl;
             let apiKey = '';
 
             if (!isLocal) {
@@ -269,7 +275,7 @@ export default function App() {
         return () => {
             isActive = false;
         };
-    }, [customBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, encryptedApiKeys, setAvailableModels, setModel]);
+    }, [activeCustomBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, encryptedApiKeys, setAvailableModels, setModel]);
 
     const handleSend = async (text, options = {}) => {
         const isLocal = providerMode === 'local';
@@ -316,7 +322,7 @@ export default function App() {
 
             // 3. Prepare Service Call
             const startTime = Date.now();
-            let baseUrl = isLocal ? (localBaseUrl || 'http://localhost:11434/v1') : customBaseUrl;
+            let baseUrl = isLocal ? (localBaseUrl || 'http://localhost:11434/v1') : activeCustomBaseUrl;
 
             // Create AbortController for this request
             const controller = new AbortController();
@@ -557,11 +563,23 @@ export default function App() {
                                         <input
                                             type="text"
                                             value={tempBaseUrl}
-                                            onChange={(e) => setTempBaseUrl(e.target.value)}
+                                            onChange={(e) => { baseUrlEditProvider.current = activeCloudProvider; setTempBaseUrl(e.target.value); }}
                                             placeholder={activeCloudProvider === 'openrouter' ? "https://openrouter.ai/api/v1" : "https://api.openai.com/v1"}
                                             className="w-full p-2 bg-brand-input border border-brand-border rounded focus:ring-2 focus:ring-brand-cyan outline-none text-white mt-1"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">Status: {customBaseUrl === tempBaseUrl ? 'Saved' : 'Saving...'}</p>
+                                        <p className="text-xs text-gray-500 mt-1">Status: {activeCustomBaseUrl === tempBaseUrl ? 'Saved' : 'Saving...'}</p>
+                                        {activeCloudProvider === 'openrouter' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    baseUrlEditProvider.current = 'openrouter';
+                                                    setTempBaseUrl(tempBaseUrl === OPENROUTER_EU_BASE_URL ? '' : OPENROUTER_EU_BASE_URL);
+                                                }}
+                                                className="text-xs text-brand-cyan hover:underline mt-1"
+                                            >
+                                                {tempBaseUrl === OPENROUTER_EU_BASE_URL ? 'Use global endpoint' : 'Use EU endpoint (eu.openrouter.ai)'}
+                                            </button>
+                                        )}
                                     </div>
                                 )}
 

@@ -42,8 +42,10 @@ export const useChatStore = create(
 
 
 
-            customBaseUrl: '', // For Custom Cloud compliant servers
-            setCustomBaseUrl: (url) => set({ customBaseUrl: url }),
+            customBaseUrls: { openrouter: '', openai: '' }, // Custom OpenAI-compatible endpoints, per provider
+            setCustomBaseUrl: (provider, url) => set((state) => ({
+                customBaseUrls: { ...state.customBaseUrls, [provider]: url }
+            })),
 
             // New Provider Modes
             providerMode: 'cloud', // 'cloud' | 'local'
@@ -280,14 +282,23 @@ export const useChatStore = create(
                 currentSessionId: state.currentSessionId,
                 favorites: state.favorites,
 
-                customBaseUrl: state.customBaseUrl,
+                customBaseUrls: state.customBaseUrls,
                 includeFreeModels: state.includeFreeModels,
                 providerMode: state.providerMode,
                 localBaseUrl: state.localBaseUrl,
                 webSearchConfig: state.webSearchConfig
             }),
-            version: 0,
-            migrate: (state) => state
+            version: 1,
+            migrate: (persisted, version) => {
+                if (version < 1 && persisted) {
+                    // v0 had one shared customBaseUrl for OpenRouter and OpenAI.
+                    const legacy = persisted.customBaseUrl || '';
+                    const target = legacy.includes('openrouter') ? 'openrouter' : 'openai';
+                    persisted.customBaseUrls = { openrouter: '', openai: '', ...(legacy ? { [target]: legacy } : {}) };
+                    delete persisted.customBaseUrl;
+                }
+                return persisted;
+            }
         }
     )
 );

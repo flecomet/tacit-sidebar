@@ -55,6 +55,15 @@ describe('useChatStore', () => {
         expect(result.current.messages).toEqual([]);
     });
 
+    it('migrates the v0 shared customBaseUrl to the matching provider', () => {
+        const migrate = useChatStore.persist.getOptions().migrate;
+        expect(migrate({ customBaseUrl: 'https://eu.openrouter.ai/api/v1' }, 0).customBaseUrls)
+            .toEqual({ openrouter: 'https://eu.openrouter.ai/api/v1', openai: '' });
+        expect(migrate({ customBaseUrl: 'https://api.groq.com/openai/v1' }, 0).customBaseUrls)
+            .toEqual({ openrouter: '', openai: 'https://api.groq.com/openai/v1' });
+        expect(migrate({ customBaseUrl: '' }, 0).customBaseUrls).toEqual({ openrouter: '', openai: '' });
+    });
+
     it('should set includeFreeModels', () => {
         const { result } = renderHook(() => useChatStore());
         expect(result.current.includeFreeModels).toBe(false); // Default

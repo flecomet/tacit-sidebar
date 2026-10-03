@@ -45,7 +45,7 @@ export const chatService = {
 
         // OpenAI Responses API redirection for Web Search
         if (provider === 'openai' && options.webSearch) {
-            return this.sendOpenAIResponses({ baseUrl, apiKey, model, messages, options });
+            return this.sendOpenAIResponses({ baseUrl, apiKey, model, messages, options, signal });
         }
 
         const { webSearch, webSearchConfig, ...otherOptions } = options;
@@ -357,7 +357,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
     },
 
     // --- OpenAI Responses API (Web Search) ---
-    async sendOpenAIResponses({ baseUrl, apiKey, model, messages, options }) {
+    async sendOpenAIResponses({ baseUrl, apiKey, model, messages, options, signal }) {
         const url = `${baseUrl.replace(/\/$/, '')}/responses`;
 
         // Use the last user message as the input prompt
@@ -376,7 +376,8 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${apiKey}`
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal
         });
 
         if (!response.ok) {

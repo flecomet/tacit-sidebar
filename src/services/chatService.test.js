@@ -81,4 +81,29 @@ describe('chatService', () => {
                 .rejects.toThrow('Failed to parse API response');
         });
     });
+
+    describe('sendOpenAIResponses', () => {
+        beforeEach(() => {
+            global.fetch = vi.fn();
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('passes the abort signal to the OpenAI Responses API', async () => {
+            global.fetch.mockResolvedValue({ ok: true, json: async () => ({ output_text: 'ok', output: [] }) });
+            const controller = new AbortController();
+
+            await chatService.sendMessage({
+                provider: 'openai', baseUrl: 'https://api.openai.com/v1', apiKey: 'sk', model: 'gpt-x',
+                messages: [{ role: 'user', content: 'hi' }], options: { webSearch: true }, signal: controller.signal
+            }).catch(() => {}); // response parsing is not under test
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                'https://api.openai.com/v1/responses',
+                expect.objectContaining({ signal: controller.signal })
+            );
+        });
+    });
 });
