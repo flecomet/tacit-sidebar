@@ -8,6 +8,7 @@ import { processFile } from '../utils/fileProcessor';
 import { scrapePage } from '../utils/pageScraper';
 import { fetchModels } from '../services/modelService';
 import { chatService } from '../services/chatService';
+import { supportsImageInput } from '../services/modelCatalog';
 import { encryptData, decryptData } from '../utils/encryption';
 import DocViewerModal from '../components/DocViewerModal';
 
@@ -296,22 +297,11 @@ export default function App() {
         try {
             // 1. Check Payload Requirements (Vision)
             const activeModelData = availableModels.find(m => m.id === model);
-            // Heuristics for vision support
-            const supportsVision =
-                // Trust the metadata if it exists 
-                activeModelData?.architecture?.input_modalities?.includes("image") ||
-
-                // Catch common naming conventions
-                model.toLowerCase().includes("vision") ||
-                model.toLowerCase().includes("vl") ||
-
-                // Catch known families 
-                /claude-3|claude-4|gpt-4|gemini|llama-3\.2/.test(model.toLowerCase());
-
             const hasImages = attachments.some(f => f.type === 'image');
 
-            if (hasImages && !supportsVision) {
-                throw new Error(`Model ${model} does not support image inputs. Please switch to a vision model (like Claude 3, GPT-4o, or Gemini).`);
+            // Block only when the provider says the model is text-only; unknown capability lets the provider decide.
+            if (hasImages && supportsImageInput(activeModelData) === false) {
+                throw new Error(`Model ${model} does not accept image inputs. Switch to a model that does.`);
             }
 
             // 2. Add User Message (Optimistic UI)

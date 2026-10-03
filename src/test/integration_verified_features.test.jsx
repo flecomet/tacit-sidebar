@@ -64,7 +64,7 @@ describe('Verified Features Integration', () => {
             { id: 'openai/gpt-4o', name: 'GPT-4o', pricing: { prompt: '0.000005', completion: '0.000015' } },
             { id: 'anthropic/claude-4-sonnet', name: 'Claude 4 Sonnet', pricing: { prompt: '0.000003', completion: '0.000015' } },
             { id: 'google/gemini-pro', name: 'Gemini Pro', pricing: { prompt: '0.000125', completion: '0.000375' } },
-            { id: 'mistral/mistral-large', name: 'Mistral Large', pricing: { prompt: '0.000002', completion: '0.000006' } }
+            { id: 'mistral/mistral-large', name: 'Mistral Large', pricing: { prompt: '0.000002', completion: '0.000006' }, architecture: { input_modalities: ['text'] } }
         ]);
 
         pageScraper.scrapePage.mockResolvedValue({
@@ -172,10 +172,10 @@ describe('Verified Features Integration', () => {
         // Now check accept
         expect(input.accept).toContain('.png');
 
-        // 2. Switch to a non-vision model (e.g. Mistral Large, assuming heuristic doesn't catch it as vision)
-        // We need to make sure our mock data and heuristic align.
-        // Heuristic: .includes("vision") || .includes("vl") || matching known families (gpt-4, claude-3, claude-4, gemini, llama-3.2)
-        // "mistral/mistral-large" does not match these. and we didn't provide architecture metadata in mock.
+        // 2. Switch to a text-only model (Mistral Large is flagged text-only by its metadata)
+        // We need to make sure our mock data and the capability rule align.
+        // Rule: image attachments are blocked only when the provider metadata says input_modalities has no "image".
+        // "mistral/mistral-large" is declared text-only in the mock model list above.
 
         fireEvent.focus(combobox);
         fireEvent.change(combobox, { target: { value: 'Mistral' } });

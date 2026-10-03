@@ -5,6 +5,7 @@ import { useChatStore } from '../store/useChatStore';
 import { useDraftStore } from '../store/useDraftStore';
 import { usePromptsStore } from '../store/usePromptsStore';
 import { getModelCategory } from '../services/modelService';
+import { supportsImageInput } from '../services/modelCatalog';
 
 export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
     const {
@@ -220,16 +221,8 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
 
     // Calculate capabilities
     const activeModel = availableModels.find(m => m.id === model);
-    const supportsVision =
-        // Trust the metadata if it exists 
-        activeModel?.architecture?.input_modalities?.includes("image") ||
-
-        // Catch common naming conventions
-        activeModel?.id.toLowerCase().includes("vision") ||
-        activeModel?.id.toLowerCase().includes("vl") ||
-
-        // Catch known families 
-        /claude-3|claude-4|gpt-4|gemini|llama-3\.2/.test(activeModel?.id.toLowerCase());
+    // Unknown capability (null) keeps image attachments enabled.
+    const supportsVision = supportsImageInput(activeModel) !== false;
 
     const acceptTypes = supportsVision
         ? ".pdf,.txt,.js,.md,.json,.ts,.py,.png,.jpg,.jpeg,.webp"
