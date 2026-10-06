@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.2] - 2026-10-06
 
+### Added
+
+- **Multiple API keys per provider** - Each key has a label; OpenRouter keys can have their own endpoint, for example the EU endpoint. The active key is chosen in Settings or in the model picker
+- **Model picker filters** - Filter by input type, output type and vendor; models are grouped by release month and show input and output price per million tokens
+- **Cost for all cloud providers** - OpenAI, Anthropic and Google replies show an estimated cost based on OpenRouter's public price list, which is downloaded without an API key. Models that OpenRouter does not list show no cost
+- **Chat total** - The running cost of the current chat is shown below the input
+
 ### Fixed
 
 - **OpenRouter EU endpoint** - `eu.openrouter.ai` is allowed by the extension's permissions and selectable in settings, for keys restricted to the EU data region
-- **Per-provider custom endpoints** - OpenRouter and OpenAI each keep their own custom endpoint; previously one shared field could route one provider's key to the other's URL
+- **Custom endpoint scope** - A custom endpoint applies only to the key it is saved with; previously one shared field could route one provider's key to another provider's URL
+- **Token counts** - OpenAI web search replies and Google replies report input and output tokens
+- **Model list after a key change** - The model list is reloaded when switching between keys of the same length
 - **Stop button with OpenAI web search** - Requests to the Responses API are now cancelled
 - **Google model list** - All pages are fetched (previously limited to the first 50 models)
 - **Extension icon** - Uses the square 128px asset
@@ -19,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Model metadata from provider APIs** - Model lists, categories, sort order and image support come from each provider's `/models` response instead of hardcoded model families. OpenAI lists are sorted newest first by the API's creation date and no longer hide chat models outside the old `gpt`/`o1` naming (such as `chat-latest`); non-chat models (audio, realtime, embeddings, image generation) are excluded by type
 - **Image attachments** - Blocked only when the provider reports the model as text-only
+- **Image generation detection** - Uses the output types the provider reports for the model, and the model name only when none are reported
+- **Custom endpoints** - New OpenRouter keys can have their own endpoint. New OpenAI keys use `https://api.openai.com/v1`; an OpenAI custom endpoint saved in an earlier version stays on the migrated key and can still be edited
 
 ### Development
 
