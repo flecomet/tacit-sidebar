@@ -33,7 +33,7 @@ We built Tacit differently.
 
 ### Zero-Knowledge Privacy
 - **No backend servers**. We don't have a database. We literally *cannot* see your conversations.
-- **Local-first storage**. Your chat history and API key are encrypted in your browser local storage.
+- **Local-first storage**. Your chat history and API keys stay in your browser's local storage. API keys are encrypted; chat history is stored unencrypted.
 - **Auditable code**. Open sourced on github.
 
 ### Zero-Markup Pricing
@@ -50,12 +50,12 @@ We built Tacit differently.
 
 ### ⚡ The Basics
 - **Global hotkey**: `Alt+J` (or `Option+J` on Mac) slides the sidebar in from any webpage
-- **Persistent chat history**: Local storage with client-side encryption
+- **Persistent chat history**: Kept in your browser's local storage
 - **Works everywhere**: Lives besides your tabs, follows your browsing
 
 ### 🧠 Model Support
 Connect to any of these:
-- **Cloud APIs**: OpenRouter (600+ models, including vision models and Nano Banana Pro), Anthropic Claude, OpenAI GPT, Google Gemini
+- **Cloud APIs**: OpenRouter (hundreds of models, including vision models and Nano Banana Pro), Anthropic Claude, OpenAI GPT, Google Gemini
 - **Local models**: Ollama and LM Studio with automatic CORS configuration
 - **Smart defaults**: Tacit detects vision-capable models automatically
 
@@ -79,7 +79,7 @@ Need answers about what happened yesterday? Enable web search.
 | **Your data** | Stays on your device | Sent to their servers |
 | **Cost** | No subscription. Pay for what you use or nothing (Ollama/LMStudio). | $10–$30/month (marked up subscription) |
 | **UI pollution** | Clean, minimalistic sidebar | Random UI elements |
-| **Model choice** | Local models, 600+ cloud | Limited model choice |
+| **Model choice** | Local models and hundreds of cloud models | Limited model choice |
 
 ## 🚀 Getting Started
 
@@ -126,6 +126,7 @@ Tacit works out of the box once you add an API key:
 1. Open the extension (Alt+J).
 2. Go to **Settings**.
 3. **For Cloud Models**: Enter your OpenRouter Key or a custom OpenAI-compatible endpoint URL.
+   - **OpenRouter EU data residency**: click "Use EU endpoint" under Custom API Endpoint, or enter `https://eu.openrouter.ai/api/v1`.
 4. **For Local Models**: Ensure your local server is running (usually `http://localhost:11434` for Ollama or `http://localhost:1234` for LMStudio).
 
 ## 🏗️ Technical Architecture
@@ -133,10 +134,10 @@ Tacit works out of the box once you add an API key:
 Tacit is a "zero-server" application running entirely in the browser:
 
 - **Frontend**: React + Vite
-- **Styling**: TailwindCSS in Shadow DOM (no CSS leakage to host pages)
+- **Styling**: TailwindCSS, scoped to the side panel (nothing is injected into host pages)
 - **State**: Zustand with local persistence
 - **Security**: 
-  - PBKDF2 + AES-GCM for API key encryption
+  - AES-GCM (256-bit) encryption of API keys, with a per-installation key kept in extension storage. This prevents keys from appearing in plain text in storage; it does not protect against someone with access to your browser profile.
   - Strict CSP (Content Security Policy)
   - No `eval()`, no remote code execution
 

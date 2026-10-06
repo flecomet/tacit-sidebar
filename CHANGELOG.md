@@ -5,6 +5,30 @@ All notable changes to Tacit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-10-06
+
+### Fixed
+
+- **OpenRouter EU endpoint** - `eu.openrouter.ai` is allowed by the extension's permissions and selectable in settings, for keys restricted to the EU data region
+- **Per-provider custom endpoints** - OpenRouter and OpenAI each keep their own custom endpoint; previously one shared field could route one provider's key to the other's URL
+- **Stop button with OpenAI web search** - Requests to the Responses API are now cancelled
+- **Google model list** - All pages are fetched (previously limited to the first 50 models)
+- **Extension icon** - Uses the square 128px asset
+
+### Changed
+
+- **Model metadata from provider APIs** - Model lists, categories, sort order and image support come from each provider's `/models` response instead of hardcoded model families. OpenAI lists are sorted newest first by the API's creation date and no longer hide chat models outside the old `gpt`/`o1` naming (such as `chat-latest`); non-chat models (audio, realtime, embeddings, image generation) are excluded by type
+- **Image attachments** - Blocked only when the provider reports the model as text-only
+
+### Development
+
+- **Weekly model catalog refresh** - A scheduled GitHub Actions workflow fetches each cloud provider's model list, updates the test fixtures, and opens a pull request when they change
+
+### Dependencies
+
+- Vite 5 to 6, Vitest 2 to 3, postcss 8.5.16, autoprefixer 10.5.2, dotenv 17.4.2
+- Remaining `npm audit` findings are in development dependencies only (@vitest/mocker, braces, postcss-selector-parser, source-map-js, tinypool); production dependencies report 0 vulnerabilities
+
 ## [1.2.1] - 2026-03-28
 
 ### Dependencies
