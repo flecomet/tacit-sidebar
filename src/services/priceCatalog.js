@@ -7,6 +7,15 @@
 const CATALOG_URL = 'https://openrouter.ai/api/v1/models';
 const TTL_MS = 60 * 60 * 1000;
 
+const FETCH_TIMEOUT_MS = 5000;
+
+const timeoutSignal = (ms) => {
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) return AbortSignal.timeout(ms);
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
+};
+
 let cached = null; // { at, byId }
 let inflight = null;
 
@@ -15,7 +24,7 @@ export const clearPriceCatalog = () => { cached = null; inflight = null; };
 export const loadPriceCatalog = (now = Date.now()) => {
     if (cached && now - cached.at < TTL_MS) return Promise.resolve(cached.byId);
     if (!inflight) {
-        inflight = fetch(CATALOG_URL)
+        inflight = fetch(CATALOG_URL, { signal: timeoutSignal(FETCH_TIMEOUT_MS), credentials: 'omit' })
             .then(res => {
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return res.json();

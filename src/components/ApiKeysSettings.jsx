@@ -19,6 +19,7 @@ export default function ApiKeysSettings({ provider }) {
     const active = getActiveKey({ apiKeys, activeKeyId }, provider);
     const [form, setForm] = useState(null); // null: closed; id null: adding; id set: editing
     const [confirmDelete, setConfirmDelete] = useState(null);
+    const [saving, setSaving] = useState(false);
     // With no key yet, show the form directly.
     const editing = form ?? (keys.length === 0 ? EMPTY_FORM : null);
     const editedEntry = editing?.id ? keys.find(k => k.id === editing.id) : null;
@@ -26,13 +27,18 @@ export default function ApiKeysSettings({ provider }) {
 
     const save = async () => {
         const { id, label, key, baseUrl } = editing;
-        if (!id && !key.trim()) return; // a new entry needs a key
-        const patch = { label, baseUrl };
-        // Blank key while editing keeps the stored key, so the form never needs the decrypted value.
-        if (key.trim()) patch.encryptedKey = await encryptData(key.trim());
-        if (id) updateApiKey(provider, id, patch);
-        else addApiKey(provider, patch);
-        setForm(null);
+        if (saving || (!id && !key.trim())) return; // a new entry needs a key
+        setSaving(true);
+        try {
+            const patch = { label, baseUrl };
+            // Blank key while editing keeps the stored key, so the form never needs the decrypted value.
+            if (key.trim()) patch.encryptedKey = await encryptData(key.trim());
+            if (id) updateApiKey(provider, id, patch);
+            else addApiKey(provider, patch);
+            setForm(null);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -90,7 +96,7 @@ export default function ApiKeysSettings({ provider }) {
                         </>
                     )}
                     <div className="flex gap-2">
-                        <button type="button" onClick={save}
+                        <button type="button" onClick={save} disabled={saving}
                             className="flex-1 bg-brand-cyan text-brand-dark py-1.5 rounded font-bold hover:bg-cyan-400 transition-colors">
                             Save key
                         </button>

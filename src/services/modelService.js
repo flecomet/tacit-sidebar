@@ -6,7 +6,7 @@ import { normalizeAnthropic, normalizeGoogle, normalizeOpenAI, normalizeOpenRout
 import { loadPriceCatalog, enrichFromCatalog } from './priceCatalog';
 
 // In-memory cache for model lists to avoid repeated API calls
-// Cache is keyed by: provider + baseUrl (hash) to detect config changes
+// Cache is keyed by: provider | baseUrl | api key fingerprint | free-models flag, to detect config changes
 const modelCache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -23,8 +23,8 @@ const fingerprint = (s) => {
 /**
  * Create a cache key from provider configuration
  */
-const getCacheKey = (provider, baseUrl, apiKey) =>
-    `${provider}|${baseUrl || 'default'}|${apiKey ? fingerprint(apiKey) : 'nokey'}`;
+const getCacheKey = (provider, baseUrl, apiKey, includeFreeModels) =>
+    `${provider}|${baseUrl || 'default'}|${apiKey ? fingerprint(apiKey) : 'nokey'}|free-${!!includeFreeModels}`;
 
 /**
  * Check if cached models are still valid
@@ -78,7 +78,7 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
         const cleanProvider = (provider || 'openrouter').toLowerCase().trim();
 
         // Check cache first
-        const cacheKey = getCacheKey(cleanProvider, customBaseUrl, apiKey);
+        const cacheKey = getCacheKey(cleanProvider, customBaseUrl, apiKey, includeFreeModels);
         const cachedModels = getCachedModels(cacheKey);
         if (cachedModels) {
             console.log(`[ModelService] Using cached models for ${cleanProvider}`);

@@ -79,38 +79,38 @@ export default function ModelPicker({ providerMode, activeProvider }) {
         setIsDropdownOpen(false);
     };
 
-const handleBlur = () => {
-    setTimeout(() => {
-        setIsDropdownOpen(false);
-    }, 200);
-
-    const text = modelInput.trim();
-    if (!text) return;
-
-    // Only auto-select if it's an exact match to a known model
-    const match = availableModels.find(m => m.name === text || m.id === text);
-    if (match && match.id !== model) {
-        setModel(match.id);
-    }
-};
-
-const handleInputKeyDown = (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        const text = modelInput.trim();
-        if (text) {
-            // Check for exact match first
-            const match = availableModels.find(m => m.name === text || m.id === text);
-            if (match) {
-                setModel(match.id);
-            } else {
-                // Start conversation with custom model ID
-                setModel(text);
-            }
+    const handleBlur = () => {
+        setTimeout(() => {
             setIsDropdownOpen(false);
+        }, 200);
+
+        const text = modelInput.trim();
+        if (!text) return;
+
+        // Only auto-select if it's an exact match to a known model
+        const match = availableModels.find(m => m.name === text || m.id === text);
+        if (match && match.id !== model) {
+            setModel(match.id);
         }
-    }
-};
+    };
+
+    const handleInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const text = modelInput.trim();
+            if (text) {
+                // Check for exact match first
+                const match = availableModels.find(m => m.name === text || m.id === text);
+                if (match) {
+                    setModel(match.id);
+                } else {
+                    // Start conversation with custom model ID
+                    setModel(text);
+                }
+                setIsDropdownOpen(false);
+            }
+        }
+    };
 
     return (
         <div
@@ -125,54 +125,54 @@ const handleInputKeyDown = (e) => {
                 </div>
             )}
 
-        <div className="flex items-center gap-1 mb-1 p-1 bg-brand-input border border-brand-border rounded text-xs focus-within:ring-1 focus-within:ring-brand-cyan focus-within:border-brand-cyan transition-all">
-            {/* Favorite Toggle for Current Model */}
-            <button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => model && toggleFavorite(model)}
-                className={`p-1 hover:bg-white/5 rounded-full transition-colors ${favorites.includes(model) ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'}`}
-                title={favorites.includes(model) ? "Unfavorite this model" : "Favorite this model"}
-            >
-                <Star size={12} fill={favorites.includes(model) ? "currentColor" : "none"} />
-            </button>
-            <input
-                ref={inputRef}
-                role="combobox"
-                aria-expanded={isDropdownOpen}
-                type="text"
-                value={modelInput}
-                onChange={(e) => {
-                    setModelInput(e.target.value);
-                    setIsDropdownOpen(true);
-                }}
-                onFocus={(e) => {
-                    setIsDropdownOpen(true);
-                    e.target.select();
-                }}
-                onBlur={handleBlur}
-                className="flex-1 bg-transparent outline-none min-w-0 text-gray-200 placeholder-gray-500 text-xs"
-                placeholder="Search model..."
-                onKeyDown={handleInputKeyDown}
-            />
-            <button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                    setIsDropdownOpen(!isDropdownOpen);
-                    inputRef.current?.focus();
-                }}
-                className="p-1 hover:bg-white/5 rounded-full transition-colors"
-                tabIndex={-1}
-            >
-                <ChevronDown size={14} className="text-gray-400" />
-            </button>
-        </div>
-
-        {/* Tooltip for Active Model */}
-        {!isDropdownOpen && isModelListHovered && activeModel && (
-            <div className="absolute bottom-full left-0 mb-2 px-2 py-1 bg-black/90 text-white text-xs rounded border border-brand-border whitespace-nowrap z-50 pointer-events-none shadow-xl">
-                {activeModel.name || activeModel.id}
+            <div className="flex items-center gap-1 mb-1 p-1 bg-brand-input border border-brand-border rounded text-xs focus-within:ring-1 focus-within:ring-brand-cyan focus-within:border-brand-cyan transition-all">
+                {/* Favorite Toggle for Current Model */}
+                <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => model && toggleFavorite(model)}
+                    className={`p-1 hover:bg-white/5 rounded-full transition-colors ${favorites.includes(model) ? 'text-yellow-400' : 'text-gray-500 hover:text-yellow-400'}`}
+                    title={favorites.includes(model) ? "Unfavorite this model" : "Favorite this model"}
+                >
+                    <Star size={12} fill={favorites.includes(model) ? "currentColor" : "none"} />
+                </button>
+                <input
+                    ref={inputRef}
+                    role="combobox"
+                    aria-expanded={isDropdownOpen}
+                    type="text"
+                    value={modelInput}
+                    onChange={(e) => {
+                        setModelInput(e.target.value);
+                        setIsDropdownOpen(true);
+                    }}
+                    onFocus={(e) => {
+                        setIsDropdownOpen(true);
+                        e.target.select();
+                    }}
+                    onBlur={handleBlur}
+                    className="flex-1 bg-transparent outline-none min-w-0 text-gray-200 placeholder-gray-500 text-xs"
+                    placeholder="Search model..."
+                    onKeyDown={handleInputKeyDown}
+                />
+                <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                        setIsDropdownOpen(!isDropdownOpen);
+                        inputRef.current?.focus();
+                    }}
+                    className="p-1 hover:bg-white/5 rounded-full transition-colors"
+                    tabIndex={-1}
+                >
+                    <ChevronDown size={14} className="text-gray-400" />
+                </button>
             </div>
-        )}
+
+            {/* Tooltip for Active Model */}
+            {!isDropdownOpen && isModelListHovered && activeModel && (
+                <div className="absolute bottom-full left-0 mb-2 px-2 py-1 bg-black/90 text-white text-xs rounded border border-brand-border whitespace-nowrap z-50 pointer-events-none shadow-xl">
+                    {activeModel.name || activeModel.id}
+                </div>
+            )}
 
             {isDropdownOpen && (
                 <div className="absolute bottom-full left-0 mb-1 w-[min(22rem,calc(100vw-2rem))] max-h-96 bg-brand-card border border-brand-border rounded shadow-lg flex flex-col overflow-hidden">

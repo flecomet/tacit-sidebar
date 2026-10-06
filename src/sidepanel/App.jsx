@@ -646,7 +646,8 @@ export default function App() {
                 isLoading={isCurrentSessionLoading}
                 isImageModel={(() => {
                     const outputs = getModalities(availableModels.find(m => m.id === model)).output;
-                    return outputs ? outputs.includes('image') : IMAGE_MODEL_NAME.test(model);
+                    // OpenRouter routers (openrouter/auto...) list image output but pick the real model per request.
+                    return outputs ? (outputs.includes('image') && !model.startsWith('openrouter/')) : IMAGE_MODEL_NAME.test(model);
                 })()}
                 onViewFile={setViewingFile}
                 onEditMessage={handleEditMessage}

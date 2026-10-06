@@ -62,6 +62,17 @@ describe('ApiKeysSettings', () => {
         expect(keys().openai[0].encryptedKey).toBe('encrypted-oa-key');
     });
 
+    it('adds a single entry when Save key is clicked twice quickly', async () => {
+        render(<ApiKeysSettings provider="openrouter" />);
+        fireEvent.change(screen.getByLabelText('Key label'), { target: { value: 'Once' } });
+        fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'k1' } });
+        const save = screen.getByRole('button', { name: 'Save key' });
+        fireEvent.click(save);
+        fireEvent.click(save);
+        await waitFor(() => expect(screen.queryByLabelText('API key')).toBeNull());
+        expect(keys().openrouter).toHaveLength(1);
+    });
+
     it('does not add an entry without a key', () => {
         render(<ApiKeysSettings provider="google" />);
         fireEvent.change(screen.getByLabelText('Key label'), { target: { value: 'Empty' } });

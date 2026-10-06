@@ -116,6 +116,14 @@ describe('migrateKeysToV2', () => {
         expect(out).not.toHaveProperty('customBaseUrls');
     });
 
+    it('tolerates null legacy fields', () => {
+        const out = migrateKeysToV2({ encryptedApiKeys: null, customBaseUrls: null }, seq());
+        expect(out.apiKeys).toEqual(emptyKeys());
+        expect(out.activeKeyId).toEqual(emptyActive());
+        expect(out).not.toHaveProperty('encryptedApiKeys');
+        expect(out).not.toHaveProperty('customBaseUrls');
+    });
+
     it('migrates an install with no saved keys to empty lists', () => {
         const out = migrateKeysToV2({}, seq());
         expect(out.apiKeys).toEqual(emptyKeys());

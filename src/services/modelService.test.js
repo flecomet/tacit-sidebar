@@ -33,6 +33,15 @@ describe('modelService', () => {
         expect(models.map(m => m.id)).toContain('free-model-1');
     });
 
+    it('does not reuse the cache when only includeFreeModels differs', async () => {
+        fetch.mockResolvedValue({ ok: true, text: async () => JSON.stringify({ data: mockModels }) });
+        const withFree = await fetchModels(null, true);
+        const withoutFree = await fetchModels(null, false);
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(withFree).toHaveLength(4);
+        expect(withoutFree.map(m => m.id)).not.toContain('free-model-1');
+    });
+
     it('should filter out free models if includeFreeModels is false (default)', async () => {
         fetch.mockResolvedValueOnce({
             ok: true,

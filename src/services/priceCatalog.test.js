@@ -17,7 +17,10 @@ describe('loadPriceCatalog', () => {
         await loadPriceCatalog(1000);
         const again = await loadPriceCatalog(2000);
         expect(fetch).toHaveBeenCalledTimes(1);
-        expect(fetch).toHaveBeenCalledWith('https://openrouter.ai/api/v1/models');
+        expect(fetch).toHaveBeenCalledTimes(1);
+        const [url, init] = fetch.mock.calls[0];
+        expect(url).toBe('https://openrouter.ai/api/v1/models');
+        expect(init.headers?.Authorization).toBeUndefined();
         expect(again.get('openai/gpt-x')).toEqual({ id: 'openai/gpt-x' });
     });
 
@@ -26,6 +29,24 @@ describe('loadPriceCatalog', () => {
         await loadPriceCatalog(0);
         await loadPriceCatalog(HOUR + 1);
         expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('times out after 5 s and retries on the next call', async () => {
+        vi.useFakeTimers();
+        try {
+            fetch.mockImplementationOnce((url, { signal }) => new Promise((_, reject) => {
+                signal.addEventListener('abort', () => reject(new Error('aborted')));
+            }));
+            const pending = loadPriceCatalog(0);
+            const assertion = expect(pending).rejects.toThrow('aborted');
+            await vi.advanceTimersByTimeAsync(5001);
+            await assertion;
+            fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: [] }) });
+            await expect(loadPriceCatalog(1)).resolves.toBeInstanceOf(Map);
+            expect(fetch).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('does not cache a failure', async () => {

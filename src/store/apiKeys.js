@@ -62,14 +62,16 @@ export const getActiveKey = (state, provider) => {
 
 /** Store v1 → v2: one key and one endpoint per provider become one active "Default" entry. */
 export const migrateKeysToV2 = (persisted, makeId = newKeyId) => {
-    const { encryptedApiKeys = {}, customBaseUrls = {}, ...rest } = persisted;
+    const { encryptedApiKeys: legacyKeys, customBaseUrls: legacyUrls, ...rest } = persisted;
+    const encryptedApiKeys = legacyKeys || {};
+    const customBaseUrls = legacyUrls || {};
     const apiKeys = emptyKeys();
     const activeKeyId = emptyActive();
     for (const p of PROVIDERS) {
-        if (!encryptedApiKeys[p]) continue;
+        if (typeof encryptedApiKeys[p] !== 'string' || !encryptedApiKeys[p]) continue;
         const id = makeId();
         const keepsUrl = ENDPOINT_PROVIDERS.includes(p) || LEGACY_ENDPOINT_PROVIDERS.includes(p);
-        apiKeys[p] = [{ id, label: 'Default', encryptedKey: encryptedApiKeys[p], baseUrl: keepsUrl ? trimUrl(customBaseUrls[p]) : '' }];
+        apiKeys[p] = [{ id, label: 'Default', encryptedKey: encryptedApiKeys[p], baseUrl: keepsUrl ? trimUrl(typeof customBaseUrls[p] === 'string' ? customBaseUrls[p] : '') : '' }];
         activeKeyId[p] = id;
     }
     return { ...rest, apiKeys, activeKeyId };
