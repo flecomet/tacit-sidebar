@@ -7,9 +7,11 @@ import { usePromptsStore } from '../store/usePromptsStore';
 import { getModelCategory } from '../services/modelService';
 import { supportsImageInput } from '../services/modelCatalog';
 import ModelPicker from './ModelPicker';
+import { sessionCost, formatCost } from '../services/usage';
 
 export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
-    const { model, availableModels } = useChatStore();
+    const { model, availableModels, messages } = useChatStore();
+    const chatCost = sessionCost(messages);
     const { draft, setDraft } = useDraftStore();
 
     // Use draft from store instead of local state
@@ -248,6 +250,12 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
                     </button>
                 )}
             </div>
+            {chatCost > 0 && (
+                <div data-testid="chat-cost" title="Total cost of this chat"
+                    className="-mt-1 text-[10px] text-gray-500 font-mono text-right">
+                    <span className="opacity-50">chat:</span> {formatCost(chatCost)}
+                </div>
+            )}
         </div>
     );
 }
