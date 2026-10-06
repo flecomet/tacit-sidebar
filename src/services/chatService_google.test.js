@@ -85,4 +85,16 @@ describe('chatService Google Provider', () => {
         await expect(chatService.sendMessage(mockParams))
             .rejects.toThrow('Google API Error: 400');
     });
+
+    it('reports input and output tokens (thinking counts as output)', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({
+                candidates: [{ content: { parts: [{ text: 'Response' }] } }],
+                usageMetadata: { promptTokenCount: 12, candidatesTokenCount: 5, thoughtsTokenCount: 3, totalTokenCount: 20 },
+            }),
+        });
+        const res = await chatService.sendMessage({ ...mockParams, options: {} });
+        expect(res.usage).toEqual({ input_tokens: 12, output_tokens: 8, total_tokens: 20 });
+    });
 });

@@ -443,7 +443,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         return {
             content: content,
             attachments: [],
-            usage: { total_tokens: 0 }
+            usage: data.usage || { total_tokens: 0 }
         };
     },
 
@@ -646,6 +646,9 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         return {
             content,
             usage: {
+                input_tokens: data.usageMetadata?.promptTokenCount || 0,
+                // Gemini bills thinking tokens as output.
+                output_tokens: (data.usageMetadata?.candidatesTokenCount || 0) + (data.usageMetadata?.thoughtsTokenCount || 0),
                 total_tokens: data.usageMetadata?.totalTokenCount || 0
             }
         };

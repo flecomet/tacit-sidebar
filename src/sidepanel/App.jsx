@@ -12,6 +12,7 @@ import { supportsImageInput } from '../services/modelCatalog';
 import { encryptData, decryptData } from '../utils/encryption';
 import ApiKeysSettings from '../components/ApiKeysSettings';
 import { getActiveKey } from '../store/apiKeys';
+import { normalizeUsage, computeCost } from '../services/usage';
 import DocViewerModal from '../components/DocViewerModal';
 
 export default function App() {
@@ -325,33 +326,14 @@ export default function App() {
 
             const endTime = Date.now();
 
-            // Calculate Metrics
-            let cost = 0;
-
-            // 1. Prefer Provider's reported cost (OpenRouter)
-            if (response.usage?.cost) {
-                cost = parseFloat(response.usage.cost);
-            }
-            // 2. Fallback to local estimation
-            else if (activeModelData?.pricing) {
-                const { prompt, completion } = activeModelData.pricing;
-                const inputTokens = response.usage?.prompt_tokens || response.usage?.input_tokens || 0;
-                const outputTokens = response.usage?.completion_tokens || response.usage?.output_tokens || 0;
-
-                // Pricing is usually per 1M tokens or similar, ensure we handle the string/number format
-                if (prompt && completion) {
-                    cost = (parseFloat(prompt) * inputTokens) + (parseFloat(completion) * outputTokens);
-                }
-            }
-
             const aiMsg = {
                 role: 'assistant',
                 content: response.content,
                 attachments: response.attachments || [],
                 metadata: {
                     latency: endTime - startTime,
-                    tokens: response.usage?.total_tokens || 0,
-                    cost: cost
+                    tokens: normalizeUsage(response.usage).total,
+                    cost: computeCost(response.usage, activeModelData?.pricing)
                 }
             };
 
