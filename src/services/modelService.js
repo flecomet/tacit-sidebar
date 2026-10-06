@@ -9,15 +9,21 @@ import { normalizeAnthropic, normalizeGoogle, normalizeOpenAI, normalizeOpenRout
 const modelCache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+// FNV-1a: tells keys apart without keeping them in the cache key as plain text.
+const fingerprint = (s) => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+    }
+    return (h >>> 0).toString(36);
+};
+
 /**
  * Create a cache key from provider configuration
  */
-const getCacheKey = (provider, baseUrl, apiKey) => {
-    // Include a hash of apiKey to invalidate cache when key changes
-    // We don't store the full key for security, just use its presence/length
-    const keyIndicator = apiKey ? `key-${apiKey.length}` : 'nokey';
-    return `${provider}|${baseUrl || 'default'}|${keyIndicator}`;
-};
+const getCacheKey = (provider, baseUrl, apiKey) =>
+    `${provider}|${baseUrl || 'default'}|${apiKey ? fingerprint(apiKey) : 'nokey'}`;
 
 /**
  * Check if cached models are still valid

@@ -142,4 +142,14 @@ describe('modelService', () => {
 
         expect(models.map(m => m.id)).toEqual(['gpt-next', 'o9-mini', 'gpt-old']);
     });
+
+    it('does not reuse the cached list for a different key of the same length', async () => {
+        fetch
+            .mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ id: 'gpt-a', created: 2 }] }) })
+            .mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ id: 'gpt-b', created: 1 }] }) });
+        const a = await fetchModels('', false, 'openai', 'sk-aaaa');
+        const b = await fetchModels('', false, 'openai', 'sk-bbbb');
+        expect(a.map(m => m.id)).toEqual(['gpt-a']);
+        expect(b.map(m => m.id)).toEqual(['gpt-b']);
+    });
 });
