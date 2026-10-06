@@ -13,7 +13,7 @@ describeIntegration('OpenRouter Real API Integration', () => {
 
     beforeAll(() => {
         // Inject the key into the store just in case components are mounted
-        useChatStore.getState().setEncryptedApiKey(apiKey);
+        useChatStore.getState().addApiKey('openrouter', { encryptedKey: apiKey });
         console.log("Running integration tests with provided API Key.");
     });
 

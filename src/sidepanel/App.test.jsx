@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import App from './App';
 import * as fileProcessor from '../utils/fileProcessor';
 import * as pageScraper from '../utils/pageScraper';
 import { useChatStore } from '../store/useChatStore';
 import { fetchModels } from '../services/modelService';
+import { emptyKeys, emptyActive } from '../store/apiKeys';
 
 // Mocks
 vi.mock('../utils/fileProcessor', () => ({
@@ -35,7 +36,9 @@ describe('App Integration', () => {
 
         // Reset store
         useChatStore.setState({
-            encryptedApiKey: '',
+            apiKeys: emptyKeys(),
+            activeKeyId: emptyActive(),
+            activeCloudProvider: 'openrouter',
             messages: [],
             providerMode: 'cloud'
         });
@@ -84,7 +87,7 @@ describe('App Integration', () => {
         const settingsBtn = screen.getByRole('button', { name: /settings/i }); // We'll add aria-label to button
         fireEvent.click(settingsBtn);
 
-        expect(screen.getByText('OpenRouter API Key')).toBeDefined();
+        expect(screen.getByText('OpenRouter API Keys')).toBeDefined();
     });
 
     it('should handle sending a message', async () => {
@@ -98,16 +101,10 @@ describe('App Integration', () => {
         const settingsBtn = screen.getByRole('button', { name: /settings/i });
         fireEvent.click(settingsBtn);
 
-        const keyInput = screen.getByPlaceholderText('sk-...');
-        fireEvent.change(keyInput, { target: { value: 'test-key' } });
-
-        const saveBtn = screen.getByRole('button', { name: 'Save Key' });
-        fireEvent.click(saveBtn);
-
-        // Settings should close (async now due to encryption)
-        await waitFor(() => {
-            expect(screen.queryByText('OpenRouter API Key')).toBeNull();
-        }, { timeout: 2000 });
+        fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'test-key' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save key' }));
+        await waitFor(() => expect(useChatStore.getState().apiKeys.openrouter).toHaveLength(1));
+        fireEvent.click(screen.getByRole('button', { name: 'Close Settings' }));
 
         // 2. Type message
         const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
@@ -295,15 +292,10 @@ describe('App Integration', () => {
         fireEvent.click(providerBtn);
 
         // Enter Key
-        const keyInput = screen.getByPlaceholderText('sk-...');
-        fireEvent.change(keyInput, { target: { value: 'ant-key' } });
-        const saveBtn = screen.getByRole('button', { name: 'Save Key' });
-        fireEvent.click(saveBtn);
-
-        // Wait for close
-        await waitFor(() => {
-            expect(screen.queryByText(/Anthropic API Key/i)).toBeNull(); // Label might be "Anthropic API Key"
-        }, { timeout: 2000 });
+        fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'ant-key' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save key' }));
+        await waitFor(() => expect(useChatStore.getState().apiKeys.anthropic).toHaveLength(1));
+        fireEvent.click(screen.getByRole('button', { name: 'Close Settings' }));
 
         // Send Message
         const input = screen.getByPlaceholderText('Ask... (type / for prompts)');
@@ -362,4 +354,41 @@ describe('App Integration', () => {
     });
 
 
+
+    it('sends with the active key and its endpoint, and follows a key switch', async () => {
+        useChatStore.setState({
+            apiKeys: {
+                ...emptyKeys(), openrouter: [
+                    { id: 'k1', label: 'EU', encryptedKey: 'encrypted-eu-key', baseUrl: 'https://eu.openrouter.ai/api/v1' },
+                    { id: 'k2', label: 'Global', encryptedKey: 'encrypted-global-key', baseUrl: '' },
+                ]
+            },
+            activeKeyId: { ...emptyActive(), openrouter: 'k1' },
+        });
+        render(<App />);
+        const chatCalls = () => global.fetch.mock.calls.filter(([url]) => String(url).endsWith('/chat/completions'));
+        const send = (text) => {
+            fireEvent.change(screen.getByPlaceholderText('Ask... (type / for prompts)'), { target: { value: text } });
+            fireEvent.click(screen.getByRole('button', { name: /send/i }));
+        };
+
+        send('one');
+        await waitFor(() => expect(chatCalls()).toHaveLength(1));
+        expect(chatCalls()[0][0]).toBe('https://eu.openrouter.ai/api/v1/chat/completions');
+        expect(chatCalls()[0][1].headers.Authorization).toBe('Bearer eu-key');
+        await waitFor(() => expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull());
+
+        act(() => useChatStore.getState().setActiveApiKey('openrouter', 'k2'));
+        send('two');
+        await waitFor(() => expect(chatCalls()).toHaveLength(2));
+        expect(chatCalls()[1][0]).toBe('https://openrouter.ai/api/v1/chat/completions');
+        expect(chatCalls()[1][1].headers.Authorization).toBe('Bearer global-key');
+    });
+
+    it('opens Settings when the provider has no key', async () => {
+        render(<App />);
+        fireEvent.change(screen.getByPlaceholderText('Ask... (type / for prompts)'), { target: { value: 'hi' } });
+        fireEvent.click(screen.getByRole('button', { name: /send/i }));
+        await waitFor(() => expect(screen.getByText('OpenRouter API Keys')).toBeDefined());
+    });
 });

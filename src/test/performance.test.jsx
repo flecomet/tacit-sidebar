@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import App from '../sidepanel/App';
 import { useChatStore } from '../store/useChatStore';
+import { emptyKeys, emptyActive } from '../store/apiKeys';
 import * as encryption from '../utils/encryption';
 import * as modelService from '../services/modelService';
 
@@ -43,12 +44,8 @@ describe('Performance Tests', () => {
 
         // Reset store to clean state
         useChatStore.setState({
-            encryptedApiKeys: {
-                openrouter: 'encrypted-test-key',
-                openai: '',
-                anthropic: '',
-                google: ''
-            },
+            apiKeys: { ...emptyKeys(), openrouter: [{ id: 'k1', label: 'Default', encryptedKey: 'encrypted-test-key', baseUrl: '' }] },
+            activeKeyId: { ...emptyActive(), openrouter: 'k1' },
             messages: [],
             providerMode: 'cloud',
             activeCloudProvider: 'openrouter',

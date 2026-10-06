@@ -5,6 +5,7 @@ import * as pageScraper from '../utils/pageScraper';
 import * as fileProcessor from '../utils/fileProcessor';
 import { useChatStore } from '../store/useChatStore';
 import { fetchModels } from '../services/modelService';
+import { emptyKeys, emptyActive } from '../store/apiKeys';
 
 // Mocks
 vi.mock('../utils/pageScraper', () => ({
@@ -39,8 +40,8 @@ describe('Verified Features Integration', () => {
                 availableModels: [],
                 model: 'anthropic/claude-4-sonnet',
                 providerMode: 'cloud',
-                encryptedApiKey: '',
-                customBaseUrls: { openrouter: '', openai: '' },
+                apiKeys: emptyKeys(),
+                activeKeyId: emptyActive(),
                 includeFreeModels: false
             });
         });

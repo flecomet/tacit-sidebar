@@ -32,7 +32,7 @@ vi.mock('../utils/pageScraper', () => ({
 describe('Plugin Refinements Verification', () => {
     beforeEach(async () => {
         useChatStore.getState().reset();
-        useChatStore.getState().setEncryptedApiKey('test-key');
+        useChatStore.getState().addApiKey('openrouter', { encryptedKey: 'test-key' });
         localStorage.clear();
         await chrome.storage.local.clear();
     });

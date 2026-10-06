@@ -8,20 +8,21 @@ import { processFile } from '../utils/fileProcessor';
 import { scrapePage } from '../utils/pageScraper';
 import { fetchModels } from '../services/modelService';
 import { chatService } from '../services/chatService';
-import { supportsImageInput, OPENROUTER_EU_BASE_URL } from '../services/modelCatalog';
+import { supportsImageInput } from '../services/modelCatalog';
 import { encryptData, decryptData } from '../utils/encryption';
+import ApiKeysSettings from '../components/ApiKeysSettings';
+import { getActiveKey } from '../store/apiKeys';
 import DocViewerModal from '../components/DocViewerModal';
 
 export default function App() {
     const {
         activeCloudProvider, setActiveCloudProvider,
-        encryptedApiKeys, setEncryptedApiKey,
+        apiKeys, activeKeyId,
         messages, addMessage,
         model, setModel, createNewChat,
         availableModels, setAvailableModels,
         ensureActiveSession,
 
-        customBaseUrls, setCustomBaseUrl,
         includeFreeModels, setIncludeFreeModels,
         providerMode, setProviderMode,
         localBaseUrl, setLocalBaseUrl,
@@ -29,8 +30,8 @@ export default function App() {
         truncateAtMessage, currentSessionId: storeSessionId
     } = useChatStore();
 
-    const activeCustomBaseUrl = customBaseUrls?.[activeCloudProvider] || '';
-    const baseUrlEditProvider = useRef(null); // provider whose endpoint the user is editing
+    const activeKey = getActiveKey({ apiKeys, activeKeyId }, activeCloudProvider);
+    const activeBaseUrl = activeKey?.baseUrl || '';
 
     // Local UI state
     const [showSettings, setShowSettings] = useState(false);
@@ -38,8 +39,6 @@ export default function App() {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [attachments, setAttachments] = useState([]);
 
-    const [tempKey, setTempKey] = useState('');
-    const [tempBaseUrl, setTempBaseUrl] = useState('');
     const [tempLocalUrl, setTempLocalUrl] = useState('');
 
     // Web Search Settings State
@@ -59,29 +58,10 @@ export default function App() {
         ensureActiveSession();
     }, [ensureActiveSession]);
 
-    // Initialize tempKey when settings open or key changes
+    // Initialize the local URL field when settings open
     useEffect(() => {
-        const loadKey = async () => {
-            // Load based on current provider context
-            if (showSettings) {
-                if (providerMode === 'cloud') {
-                    const encKey = encryptedApiKeys[activeCloudProvider];
-                    if (encKey) {
-                        try {
-                            const key = await decryptData(encKey);
-                            setTempKey(key || '');
-                        } catch (e) { console.error(e); setTempKey(''); }
-                    } else {
-                        setTempKey('');
-                    }
-                }
-                baseUrlEditProvider.current = null;
-                setTempBaseUrl(activeCustomBaseUrl);
-                setTempLocalUrl(localBaseUrl || '');
-            }
-        };
-        loadKey();
-    }, [showSettings, activeCloudProvider, providerMode, encryptedApiKeys, activeCustomBaseUrl, localBaseUrl]);
+        if (showSettings) setTempLocalUrl(localBaseUrl || '');
+    }, [showSettings, localBaseUrl]);
 
     // Load Search Keys
     useEffect(() => {
@@ -101,32 +81,7 @@ export default function App() {
         loadSearchKey();
     }, [showSettings, webSearchConfig]);
 
-    // Manual Save Key Handler
-    const handleSaveKey = async () => {
-        // If empty, clear it
-        if (!tempKey.trim()) {
-            setEncryptedApiKey(activeCloudProvider, '');
-            return;
-        }
-        const encrypted = await encryptData(tempKey);
-        setEncryptedApiKey(activeCloudProvider, encrypted);
-        // We don't necessarily close settings, user might want to configure other things
-        // But maybe give feedback? For now, standard behavior.
-        setShowSettings(false);
-    };
-
-    // Auto-save effects with debounce
-    useEffect(() => {
-        const target = baseUrlEditProvider.current;
-        if (!target) return; // persist only user edits, never a value loaded for another provider
-        const timer = setTimeout(() => {
-            if ((customBaseUrls?.[target] || '') !== tempBaseUrl) {
-                setCustomBaseUrl(target, tempBaseUrl);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [tempBaseUrl, customBaseUrls, setCustomBaseUrl]);
-
+    // Auto-save effect with debounce
     useEffect(() => {
         const timer = setTimeout(() => {
             if (localBaseUrl !== tempLocalUrl) {
@@ -228,11 +183,11 @@ export default function App() {
         const loadModels = async () => {
             const isLocal = providerMode === 'local';
             const provider = isLocal ? 'local' : activeCloudProvider;
-            const urlToUse = isLocal ? localBaseUrl : activeCustomBaseUrl;
+            const urlToUse = isLocal ? localBaseUrl : activeBaseUrl;
             let apiKey = '';
 
             if (!isLocal) {
-                const encKey = encryptedApiKeys[activeCloudProvider];
+                const encKey = activeKey?.encryptedKey;
                 if (encKey) {
                     try {
                         apiKey = await decryptData(encKey);
@@ -275,7 +230,7 @@ export default function App() {
         return () => {
             isActive = false;
         };
-    }, [activeCustomBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, encryptedApiKeys, setAvailableModels, setModel]);
+    }, [activeKey?.id, activeKey?.encryptedKey, activeBaseUrl, localBaseUrl, includeFreeModels, providerMode, activeCloudProvider, setAvailableModels, setModel]);
 
     const handleSend = async (text, options = {}) => {
         const isLocal = providerMode === 'local';
@@ -284,7 +239,7 @@ export default function App() {
         let apiKey = '';
 
         if (!isLocal) {
-            const encKey = encryptedApiKeys[activeCloudProvider];
+            const encKey = activeKey?.encryptedKey;
             if (!encKey) {
                 setShowSettings(true);
                 return false;
@@ -322,7 +277,7 @@ export default function App() {
 
             // 3. Prepare Service Call
             const startTime = Date.now();
-            let baseUrl = isLocal ? (localBaseUrl || 'http://localhost:11434/v1') : activeCustomBaseUrl;
+            let baseUrl = isLocal ? (localBaseUrl || 'http://localhost:11434/v1') : activeBaseUrl;
 
             // Create AbortController for this request
             const controller = new AbortController();
@@ -531,57 +486,7 @@ export default function App() {
                                     </div>
                                 </div>
 
-                                <div className="pt-2">
-                                    <label className="block text-sm font-medium text-gray-300">
-                                        {activeCloudProvider === 'openrouter' ? 'OpenRouter' :
-                                            activeCloudProvider === 'openai' ? 'OpenAI' :
-                                                activeCloudProvider === 'anthropic' ? 'Anthropic' :
-                                                    activeCloudProvider === 'google' ? 'Google' : activeCloudProvider} API Key
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={tempKey}
-                                        onChange={(e) => setTempKey(e.target.value)}
-                                        placeholder={`sk-...`}
-                                        className="w-full p-2 bg-brand-input border border-brand-border rounded focus:ring-2 focus:ring-brand-cyan outline-none text-white transition-all mt-1"
-                                    />
-                                    <button
-                                        onClick={handleSaveKey}
-                                        className="w-full bg-brand-cyan text-brand-dark py-2 rounded hover:bg-cyan-400 font-bold transition-colors mt-3"
-                                    >
-                                        Save Key
-                                    </button>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Use your own API key. Keys are stored encrypted locally.
-                                    </p>
-                                </div>
-
-                                {/* Custom URL option for OpenRouter/OpenAI Compatible mostly */}
-                                {(activeCloudProvider === 'openrouter' || activeCloudProvider === 'openai') && (
-                                    <div className="pt-4 border-t border-brand-border">
-                                        <label className="block text-sm font-medium text-gray-300">Custom API Endpoint (Optional)</label>
-                                        <input
-                                            type="text"
-                                            value={tempBaseUrl}
-                                            onChange={(e) => { baseUrlEditProvider.current = activeCloudProvider; setTempBaseUrl(e.target.value); }}
-                                            placeholder={activeCloudProvider === 'openrouter' ? "https://openrouter.ai/api/v1" : "https://api.openai.com/v1"}
-                                            className="w-full p-2 bg-brand-input border border-brand-border rounded focus:ring-2 focus:ring-brand-cyan outline-none text-white mt-1"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">Status: {activeCustomBaseUrl === tempBaseUrl ? 'Saved' : 'Saving...'}</p>
-                                        {activeCloudProvider === 'openrouter' && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    baseUrlEditProvider.current = 'openrouter';
-                                                    setTempBaseUrl(tempBaseUrl === OPENROUTER_EU_BASE_URL ? '' : OPENROUTER_EU_BASE_URL);
-                                                }}
-                                                className="text-xs text-brand-cyan hover:underline mt-1"
-                                            >
-                                                {tempBaseUrl === OPENROUTER_EU_BASE_URL ? 'Use global endpoint' : 'Use EU endpoint (eu.openrouter.ai)'}
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                                <ApiKeysSettings key={activeCloudProvider} provider={activeCloudProvider} />
 
                                 {activeCloudProvider === 'openrouter' && (
                                     <div className="pt-4 border-t border-brand-border">
