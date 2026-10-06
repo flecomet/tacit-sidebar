@@ -13,17 +13,27 @@ describe('useChatStore', () => {
     it('should initialize with default state', () => {
         const { result } = renderHook(() => useChatStore());
         expect(result.current.messages).toEqual([]);
-        expect(result.current.encryptedApiKeys.openrouter).toBe('');
+        expect(result.current.apiKeys.openrouter).toEqual([]);
         // Default model commonly used
         expect(result.current.model).toBe('anthropic/claude-4-sonnet');
     });
 
-    it('should set API key', () => {
+    it('adds a key and makes it active', () => {
         const { result } = renderHook(() => useChatStore());
         act(() => {
-            result.current.setEncryptedApiKey('openrouter', 'sk-test-key');
+            result.current.addApiKey('openrouter', { label: 'EU', encryptedKey: 'sk-test-key', baseUrl: '' });
         });
-        expect(result.current.encryptedApiKeys.openrouter).toBe('sk-test-key');
+        const [entry] = result.current.apiKeys.openrouter;
+        expect(entry.encryptedKey).toBe('sk-test-key');
+        expect(result.current.activeKeyId.openrouter).toBe(entry.id);
+    });
+
+    it('reset clears all keys', () => {
+        const { result } = renderHook(() => useChatStore());
+        act(() => { result.current.addApiKey('openai', { encryptedKey: 'e' }); });
+        act(() => { result.current.reset(); });
+        expect(result.current.apiKeys.openai).toEqual([]);
+        expect(result.current.activeKeyId.openai).toBeNull();
     });
 
     it('should set Model', () => {
@@ -55,13 +65,33 @@ describe('useChatStore', () => {
         expect(result.current.messages).toEqual([]);
     });
 
-    it('migrates the v0 shared customBaseUrl to the matching provider', () => {
+    it('migrates a v0 install through v1 to v2', () => {
         const migrate = useChatStore.persist.getOptions().migrate;
-        expect(migrate({ customBaseUrl: 'https://eu.openrouter.ai/api/v1' }, 0).customBaseUrls)
-            .toEqual({ openrouter: 'https://eu.openrouter.ai/api/v1', openai: '' });
-        expect(migrate({ customBaseUrl: 'https://api.groq.com/openai/v1' }, 0).customBaseUrls)
-            .toEqual({ openrouter: '', openai: 'https://api.groq.com/openai/v1' });
-        expect(migrate({ customBaseUrl: '' }, 0).customBaseUrls).toEqual({ openrouter: '', openai: '' });
+        const out = migrate({ encryptedApiKeys: { openrouter: 'enc' }, customBaseUrl: 'https://eu.openrouter.ai/api/v1' }, 0);
+        expect(out.apiKeys.openrouter[0]).toMatchObject({ label: 'Default', encryptedKey: 'enc', baseUrl: 'https://eu.openrouter.ai/api/v1' });
+        expect(out.activeKeyId.openrouter).toBe(out.apiKeys.openrouter[0].id);
+        expect(out).not.toHaveProperty('customBaseUrl');
+        expect(out).not.toHaveProperty('customBaseUrls');
+        expect(out).not.toHaveProperty('encryptedApiKeys');
+    });
+
+    it('keeps a v0 OpenAI-compatible endpoint on the OpenAI key', () => {
+        const migrate = useChatStore.persist.getOptions().migrate;
+        const out = migrate({ encryptedApiKeys: { openai: 'enc' }, customBaseUrl: 'https://api.groq.com/openai/v1' }, 0);
+        expect(out.apiKeys.openai[0]).toMatchObject({ encryptedKey: 'enc', baseUrl: 'https://api.groq.com/openai/v1' });
+    });
+
+    it('leaves v2 data unchanged', () => {
+        const migrate = useChatStore.persist.getOptions().migrate;
+        const v2 = {
+            apiKeys: { openrouter: [{ id: 'k', label: 'EU', encryptedKey: 'e', baseUrl: '' }], openai: [], anthropic: [], google: [] },
+            activeKeyId: { openrouter: 'k', openai: null, anthropic: null, google: null },
+        };
+        expect(migrate(structuredClone(v2), 2)).toEqual(v2);
+    });
+
+    it('persists at version 2', () => {
+        expect(useChatStore.persist.getOptions().version).toBe(2);
     });
 
     it('should set includeFreeModels', () => {

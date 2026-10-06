@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { chromeStorageAdapter } from './chromeStorageAdapter';
+import { emptyKeys, emptyActive, addKey, updateKey, removeKey, setActiveKey, migrateKeysToV2 } from './apiKeys';
 
 const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -16,15 +17,13 @@ export const useChatStore = create(
             activeCloudProvider: 'openrouter', // 'openrouter' | 'openai' | 'anthropic' | 'google'
             setActiveCloudProvider: (provider) => set({ activeCloudProvider: provider }),
 
-            encryptedApiKeys: {
-                openrouter: '',
-                openai: '',
-                anthropic: '',
-                google: ''
-            },
-            setEncryptedApiKey: (provider, key) => set((state) => ({
-                encryptedApiKeys: { ...state.encryptedApiKeys, [provider]: key }
-            })),
+            // Several keys per provider; the active one is used for the model list and requests.
+            apiKeys: emptyKeys(),
+            activeKeyId: emptyActive(),
+            addApiKey: (provider, entry) => set(state => addKey(state, provider, entry)),
+            updateApiKey: (provider, id, patch) => set(state => updateKey(state, provider, id, patch)),
+            removeApiKey: (provider, id) => set(state => removeKey(state, provider, id)),
+            setActiveApiKey: (provider, id) => set(state => setActiveKey(state, provider, id)),
             includeFreeModels: false,
             setIncludeFreeModels: (include) => set({ includeFreeModels: include }),
             messages: [],
@@ -41,11 +40,6 @@ export const useChatStore = create(
             favorites: [],
 
 
-
-            customBaseUrls: { openrouter: '', openai: '' }, // Custom OpenAI-compatible endpoints, per provider
-            setCustomBaseUrl: (provider, url) => set((state) => ({
-                customBaseUrls: { ...state.customBaseUrls, [provider]: url }
-            })),
 
             // New Provider Modes
             providerMode: 'cloud', // 'cloud' | 'local'
@@ -263,7 +257,8 @@ export const useChatStore = create(
             }),
 
             reset: () => set({
-                encryptedApiKeys: { openrouter: '', openai: '', anthropic: '', google: '' },
+                apiKeys: emptyKeys(),
+                activeKeyId: emptyActive(),
                 messages: [],
                 sessions: [],
                 currentSessionId: null,
@@ -276,27 +271,29 @@ export const useChatStore = create(
             partialize: (state) => ({
                 messages: state.messages,
                 model: state.model,
-                encryptedApiKeys: state.encryptedApiKeys,
+                apiKeys: state.apiKeys,
+                activeKeyId: state.activeKeyId,
                 activeCloudProvider: state.activeCloudProvider,
                 sessions: state.sessions,
                 currentSessionId: state.currentSessionId,
                 favorites: state.favorites,
 
-                customBaseUrls: state.customBaseUrls,
                 includeFreeModels: state.includeFreeModels,
                 providerMode: state.providerMode,
                 localBaseUrl: state.localBaseUrl,
                 webSearchConfig: state.webSearchConfig
             }),
-            version: 1,
+            version: 2,
             migrate: (persisted, version) => {
-                if (version < 1 && persisted) {
+                if (!persisted) return persisted;
+                if (version < 1) {
                     // v0 had one shared customBaseUrl for OpenRouter and OpenAI.
                     const legacy = persisted.customBaseUrl || '';
                     const target = legacy.includes('openrouter') ? 'openrouter' : 'openai';
                     persisted.customBaseUrls = { openrouter: '', openai: '', ...(legacy ? { [target]: legacy } : {}) };
                     delete persisted.customBaseUrl;
                 }
+                if (version < 2) persisted = migrateKeysToV2(persisted);
                 return persisted;
             }
         }
