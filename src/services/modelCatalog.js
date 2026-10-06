@@ -28,12 +28,12 @@ const maxParamBillions = (id) => {
     return sizes.length ? Math.max(...sizes) : null;
 };
 
-/** true / false when the provider says so, null when unknown. */
+/** true / false when the provider says so, null when unknown. The provider's own answer wins over catalog modalities. */
 export const supportsImageInput = (model) => {
     if (!model) return null;
+    if (typeof model.supportsImages === 'boolean') return model.supportsImages;
     const modalities = model.architecture?.input_modalities;
     if (Array.isArray(modalities)) return modalities.includes('image');
-    if (typeof model.supportsImages === 'boolean') return model.supportsImages;
     return null;
 };
 

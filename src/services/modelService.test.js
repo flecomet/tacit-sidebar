@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchModels, clearModelCache } from './modelService';
+import { loadPriceCatalog } from './priceCatalog';
+
+vi.mock('./priceCatalog', async (importOriginal) => ({
+    ...(await importOriginal()),
+    loadPriceCatalog: vi.fn().mockResolvedValue(null),
+}));
 
 global.fetch = vi.fn();
 
@@ -151,5 +157,28 @@ describe('modelService', () => {
         const b = await fetchModels('', false, 'openai', 'sk-bbbb');
         expect(a.map(m => m.id)).toEqual(['gpt-a']);
         expect(b.map(m => m.id)).toEqual(['gpt-b']);
+    });
+
+    it('adds catalog prices and modalities to direct-provider models', async () => {
+        vi.mocked(loadPriceCatalog).mockResolvedValueOnce(new Map([['anthropic/claude-sonnet-5.5', {
+            id: 'anthropic/claude-sonnet-5.5',
+            pricing: { prompt: '0.000002', completion: '0.00001' },
+            architecture: { input_modalities: ['text', 'image'], output_modalities: ['text'] },
+            created: 1,
+        }]]));
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ data: [{ id: 'claude-sonnet-5-5', display_name: 'Claude Sonnet 5.5', created_at: '2026-09-29T00:00:00Z', capabilities: { image_input: { supported: true } } }] }),
+        });
+        const [m] = await fetchModels('', false, 'anthropic', 'sk-ant');
+        expect(m.pricing).toEqual({ prompt: '0.000002', completion: '0.00001' });
+        expect(m.architecture.output_modalities).toEqual(['text']);
+    });
+
+    it('still lists models when the price catalog fails', async () => {
+        vi.mocked(loadPriceCatalog).mockRejectedValueOnce(new Error('HTTP 403'));
+        fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ id: 'gpt-x', created: 1 }] }) });
+        const models = await fetchModels('', false, 'openai', 'sk-1');
+        expect(models.map(m => m.id)).toEqual(['gpt-x']);
     });
 });

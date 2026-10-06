@@ -3,6 +3,7 @@
  */
 
 import { normalizeAnthropic, normalizeGoogle, normalizeOpenAI, normalizeOpenRouter, getModelCategory } from './modelCatalog';
+import { loadPriceCatalog, enrichFromCatalog } from './priceCatalog';
 
 // In-memory cache for model lists to avoid repeated API calls
 // Cache is keyed by: provider + baseUrl (hash) to detect config changes
@@ -66,6 +67,12 @@ export const clearModelCache = (provider = null) => {
     }
 };
 
+// Prices are optional: a failed catalog request must never block the model list.
+const withCatalog = async (provider, models) => {
+    const catalog = await loadPriceCatalog().catch(() => null);
+    return enrichFromCatalog(models, provider, catalog);
+};
+
 export const fetchModels = async (customBaseUrl, includeFreeModels = false, provider = 'openrouter', apiKey = '') => {
     try {
         const cleanProvider = (provider || 'openrouter').toLowerCase().trim();
@@ -99,7 +106,7 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
             if (!response.ok) throw new Error(`Anthropic API Error: ${response.status}`);
 
             const data = await response.json();
-            const result = normalizeAnthropic(data).map(m => ({ ...m, _category: getModelCategory(m) }));
+            const result = (await withCatalog('anthropic', normalizeAnthropic(data))).map(m => ({ ...m, _category: getModelCategory(m) }));
             setCachedModels(cacheKey, result);
             return result;
         }
@@ -122,7 +129,7 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
                 pageToken = data.nextPageToken || '';
             } while (pageToken);
 
-            const result = normalizeGoogle(raw).map(m => ({ ...m, _category: getModelCategory(m) }));
+            const result = (await withCatalog('google', normalizeGoogle(raw))).map(m => ({ ...m, _category: getModelCategory(m) }));
             setCachedModels(cacheKey, result);
             return result;
         }
@@ -139,7 +146,7 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
             if (!response.ok) throw new Error(`OpenAI API Error: ${response.status}`);
 
             const data = await response.json();
-            const result = normalizeOpenAI(data).map(m => ({ ...m, _category: getModelCategory(m) }));
+            const result = (await withCatalog('openai', normalizeOpenAI(data))).map(m => ({ ...m, _category: getModelCategory(m) }));
             setCachedModels(cacheKey, result);
             return result;
         }

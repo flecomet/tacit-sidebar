@@ -99,4 +99,9 @@ describe('supportsImageInput', () => {
         expect(supportsImageInput({ id: 'llava' })).toBe(null);
         expect(supportsImageInput(undefined)).toBe(null);
     });
+
+    it("prefers the provider's own answer over catalog modalities", () => {
+        expect(supportsImageInput({ supportsImages: false, architecture: { input_modalities: ['text', 'image'] } })).toBe(false);
+        expect(supportsImageInput({ supportsImages: null, architecture: { input_modalities: ['text', 'image'] } })).toBe(true);
+    });
 });
