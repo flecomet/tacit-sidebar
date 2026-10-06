@@ -12,8 +12,12 @@ import { supportsImageInput } from '../services/modelCatalog';
 import { encryptData, decryptData } from '../utils/encryption';
 import ApiKeysSettings from '../components/ApiKeysSettings';
 import { getActiveKey } from '../store/apiKeys';
+import { getModalities } from '../services/modelFilters';
 import { normalizeUsage, computeCost } from '../services/usage';
 import DocViewerModal from '../components/DocViewerModal';
+
+// Fallback when the provider gives no output types for the model.
+const IMAGE_MODEL_NAME = /flux|dall-?e|stable.?diffusion|imagen|midjourney|banana|image/i;
 
 export default function App() {
     const {
@@ -640,7 +644,10 @@ export default function App() {
             <MessageList
                 messages={messages}
                 isLoading={isCurrentSessionLoading}
-                isImageModel={/flux|dall-?e|stable.?diffusion|imagen|midjourney|banana|image/i.test(model)}
+                isImageModel={(() => {
+                    const outputs = getModalities(availableModels.find(m => m.id === model)).output;
+                    return outputs ? outputs.includes('image') : IMAGE_MODEL_NAME.test(model);
+                })()}
                 onViewFile={setViewingFile}
                 onEditMessage={handleEditMessage}
             />
