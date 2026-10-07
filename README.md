@@ -34,7 +34,7 @@ We built Tacit differently.
 ### Zero-Knowledge Privacy
 - **No backend servers**. We don't have a database. We literally *cannot* see your conversations.
 - **Local-first storage**. Your chat history and API keys stay in your browser's local storage. API keys are encrypted; chat history is stored unencrypted.
-- **Price lookups**. To show prices and costs for OpenAI, Anthropic and Google models, Tacit downloads OpenRouter's public model list. The request carries no API key and no chat content.
+- **Price lookups**. To show prices and costs for OpenAI, Anthropic and Google models, Tacit downloads OpenRouter's public model list with an anonymous request.
 - **Auditable code**. Open sourced on github.
 
 ### Zero-Markup Pricing

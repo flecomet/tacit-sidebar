@@ -229,25 +229,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         const attachments = [];
 
         // Handle "Nano Banana" style images (OpenRouter specific)
-        if (data.choices[0].message.images) {
-            data.choices[0].message.images.forEach(img => {
-                const imgUrl = img.image_url?.url || img.url;
-                if (imgUrl) {
-                    // Fix Duplicate Image Bug:
-                    // Only append to markdown if it's NOT already there
-                    if (!content.includes(imgUrl)) {
-                        content += `\n\n![Generated Image](${imgUrl})`;
-                    }
-
-                    // Add to attachments for High-Res download UI
-                    attachments.push({
-                        type: 'image',
-                        url: imgUrl,
-                        name: 'generated_image.png'
-                    });
-                }
-            });
-        }
+        content = this.appendImages(content, data.choices[0].message.images, attachments);
 
         // Fallback: Scan content for markdown images to ensure all images are in attachments
         // This handles cases where models (like Nano Banana 3 Pro with reasoning) 
@@ -272,6 +254,28 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         };
     },
 
+    // Appends OpenRouter image outputs to content as markdown and to attachments; returns the new content.
+    appendImages(content, images, attachments) {
+        (images || []).forEach(img => {
+            const imgUrl = img.image_url?.url || img.url;
+            if (imgUrl) {
+                // Fix Duplicate Image Bug:
+                // Only append to markdown if it's NOT already there
+                if (!content.includes(imgUrl)) {
+                    content += `\n\n![Generated Image](${imgUrl})`;
+                }
+
+                // Add to attachments for High-Res download UI
+                attachments.push({
+                    type: 'image',
+                    url: imgUrl,
+                    name: 'generated_image.png'
+                });
+            }
+        });
+        return content;
+    },
+
     // --- Parse SSE Stream Response ---
     async parseStreamResponse(response) {
         const reader = response.body.getReader();
@@ -279,7 +283,7 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         let buffer = '';
         let content = '';
         let usage = { total_tokens: 0 };
-        const attachments = [];
+        const images = [];
 
         try {
             while (true) {
@@ -317,6 +321,12 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
                                 content += delta;
                             }
 
+                            // Image models stream generated images in delta.images, not content
+                            const deltaImages = parsed.choices?.[0]?.delta?.images;
+                            if (deltaImages) {
+                                images.push(...deltaImages);
+                            }
+
                             // Capture usage from final chunk
                             if (parsed.usage) {
                                 usage = parsed.usage;
@@ -334,6 +344,9 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         } finally {
             reader.cancel();
         }
+
+        const attachments = [];
+        content = this.appendImages(content, images, attachments);
 
         // Scan content for markdown images
         const markdownImageRegex = /!\[.*?\]\((.*?)\)/g;

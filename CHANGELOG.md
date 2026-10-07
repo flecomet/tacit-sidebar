@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stop button with OpenAI web search** - Requests to the Responses API are now cancelled
 - **Google model list** - All pages are fetched (previously limited to the first 50 models)
 - **Extension icon** - Uses the square 128px asset
+- **Generated images with streaming** - Images from OpenRouter image models are no longer dropped when the reply is streamed
 
 ### Changed
 

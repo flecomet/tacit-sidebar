@@ -76,4 +76,38 @@ describe('ChatService - Nano Banana Reasoning', () => {
         expect(result.attachments).toHaveLength(1);
         expect(result.attachments[0].url).toBe('https://example.com/derived_banana.png');
     });
+
+    it('should keep images sent in stream deltas (OpenRouter streams when a signal is passed)', async () => {
+        const dataUrl = 'data:image/png;base64,iVBORw0KGgo=';
+        const sse = [
+            `data: ${JSON.stringify({ choices: [{ delta: { role: 'assistant', content: '' } }] })}`,
+            `data: ${JSON.stringify({ choices: [{ delta: { images: [{ type: 'image_url', image_url: { url: dataUrl } }] } }] })}`,
+            `data: ${JSON.stringify({ choices: [{ delta: {} }], usage: { total_tokens: 1127 } })}`,
+            'data: [DONE]',
+            ''
+        ].join('\n');
+        const chunks = [new TextEncoder().encode(sse)];
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            body: {
+                getReader: () => ({
+                    read: async () => chunks.length ? { done: false, value: chunks.shift() } : { done: true },
+                    cancel: () => {}
+                })
+            }
+        });
+
+        const result = await chatService.sendMessage({
+            provider: 'openrouter',
+            baseUrl: 'https://openrouter.ai/api/v1',
+            apiKey: 'test-key',
+            model: 'google/gemini-2.5-flash-image',
+            messages: [{ role: 'user', content: 'cutie cat' }],
+            signal: new AbortController().signal
+        });
+
+        expect(result.content).toContain(`![Generated Image](${dataUrl})`);
+        expect(result.attachments).toEqual([{ type: 'image', url: dataUrl, name: 'generated_image.png' }]);
+        expect(result.usage.total_tokens).toBe(1127);
+    });
 });
