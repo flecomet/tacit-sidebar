@@ -402,6 +402,24 @@
    "thinking": true
   },
   {
+   "name": "models/gemini-nano-banana-2.1",
+   "version": "3.0",
+   "displayName": "Nano Banana 2.1",
+   "description": "Gemini Nano Banana 2.1.",
+   "inputTokenLimit": 65536,
+   "outputTokenLimit": 65536,
+   "supportedGenerationMethods": [
+    "generateContent",
+    "countTokens",
+    "batchGenerateContent"
+   ],
+   "temperature": 1,
+   "topP": 0.95,
+   "topK": 64,
+   "maxTemperature": 1,
+   "thinking": true
+  },
+  {
    "name": "models/gemini-3.5-flash",
    "version": "3.5-flash-05-2026",
    "displayName": "Gemini 3.5 Flash",
@@ -487,8 +505,7 @@
    "temperature": 1,
    "topP": 0.95,
    "topK": 64,
-   "maxTemperature": 2,
-   "thinking": true
+   "maxTemperature": 2
   },
   {
    "name": "models/gemini-3.6-flash",
@@ -610,8 +627,7 @@
    "temperature": 1,
    "topP": 0.95,
    "topK": 64,
-   "maxTemperature": 2,
-   "thinking": true
+   "maxTemperature": 2
   },
   {
    "name": "models/gemini-3.8-flash-tts",
