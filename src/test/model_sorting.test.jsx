@@ -20,7 +20,7 @@ describe('Model Sorting Logic', () => {
         });
 
         // Provider is 'openrouter'
-        const models = await fetchModels('https://openrouter.ai/api/v1', true, 'openrouter', 'test-key');
+        const models = await fetchModels('https://eu.openrouter.ai/api/v1', 'openrouter', 'test-key');
         const sortedIds = models.map(m => m.id);
 
         // OpenAI sorting would put GPT-5 first. Default/Original order puts GPT-4o first.

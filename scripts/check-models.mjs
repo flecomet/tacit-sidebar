@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Fetch live model lists, run Tacit's normalizers, and report kept/dropped ids.
 // Usage: node scripts/check-models.mjs [--write-fixtures]
-// Run weekly by .github/workflows/model-catalog.yml; run locally when a provider ships a new product type.
+// Run every 8 hours by .github/workflows/model-catalog.yml; run locally when a provider ships a new product type.
 import 'dotenv/config';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {

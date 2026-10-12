@@ -35,16 +35,58 @@ describe('App Web Search Integration', () => {
         useChatStore.setState({
             providerMode: 'local',
             webSearchConfig: {
-                provider: 'google',
+                provider: 'serper',
                 encryptedApiKey: 'encrypted-test-search-key',
-                cx: 'test-cx'
             },
             messages: [],
             model: 'local-model'
         });
     });
 
-    it('decrypts and passes web search config to chatService', async () => {
+    it('selects Brave and saves its key encrypted without a Google engine ID', async () => {
+        vi.spyOn(window, 'alert').mockImplementation(() => {});
+        render(<App />);
+        fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+        expect(screen.queryByRole('button', { name: 'Google' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Brave' }));
+
+        expect(screen.getByText('Brave Search API Key')).toBeTruthy();
+        expect(screen.queryByText('Search Engine ID (CX)')).toBeNull();
+        await waitFor(() => expect(screen.getByPlaceholderText('Key...').value).toBe(''));
+        fireEvent.change(screen.getByPlaceholderText('Key...'), { target: { value: 'brave-key' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save Search Config' }));
+
+        await waitFor(() => expect(useChatStore.getState().webSearchConfig).toMatchObject({
+            provider: 'brave', encryptedApiKey: 'encrypted-brave-key'
+        }));
+    });
+
+    it('keeps search keys separate when switching providers', async () => {
+        render(<App />);
+        fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+        await waitFor(() => expect(screen.getByPlaceholderText('Key...').value).toBe('test-search-key'));
+        fireEvent.click(screen.getByRole('button', { name: 'SerpApi' }));
+        expect(screen.getByPlaceholderText('Key...').value).toBe('');
+        expect(useChatStore.getState().webSearchConfig.encryptedApiKey).toBe('');
+        fireEvent.click(screen.getByRole('button', { name: 'Serper.dev' }));
+        await waitFor(() => expect(screen.getByPlaceholderText('Key...').value).toBe('test-search-key'));
+    });
+
+    it('keeps Google settings editable for an existing configuration', async () => {
+        useChatStore.setState({ webSearchConfig: { provider: 'google', encryptedApiKey: 'encrypted-google-key', cx: 'existing-engine' } });
+        vi.spyOn(window, 'alert').mockImplementation(() => {});
+        render(<App />);
+        fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+        expect(screen.getByRole('button', { name: 'Google (existing customers)' })).toBeTruthy();
+        await waitFor(() => expect(screen.getByPlaceholderText('Key...').value).toBe('google-key'));
+        expect(screen.getByPlaceholderText('cx...').value).toBe('existing-engine');
+        fireEvent.change(screen.getByPlaceholderText('cx...'), { target: { value: 'updated-engine' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Save Search Config' }));
+        await waitFor(() => expect(useChatStore.getState().webSearchConfig).toMatchObject({ provider: 'google', encryptedApiKey: 'encrypted-google-key', cx: 'updated-engine' }));
+    });
+
+    it.each(['google', 'serper', 'serpapi', 'brave'])('decrypts and passes %s search config to chatService', async (provider) => {
+        useChatStore.setState({ webSearchConfig: { ...useChatStore.getState().webSearchConfig, provider } });
         render(<App />);
 
         // 1. Enable Web Search (assuming a toggle exists or we can mock it)
@@ -75,9 +117,8 @@ describe('App Web Search Integration', () => {
                         webSearch: true,
                         webSearchConfig: expect.objectContaining({
                             apiKey: 'test-search-key', // Decrypted!
-                            provider: 'google',
-                            cx: 'test-cx'
-                        })
+                            provider,
+                                    })
                     })
                 })
             );

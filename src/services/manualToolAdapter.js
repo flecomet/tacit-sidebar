@@ -57,6 +57,22 @@ Do not use other formats. Only use the format above.
      * @returns {Object|null} - { tool: string, args: Object } or null
      */
     parseToolCall(content) {
+        // Gemma can emit its trained search syntax despite the injected XML instructions.
+        const gemmaMatch = content.match(/<tool_call>\s*call:google_search:search\s*\{\s*(?:"queries"|queries)\s*:\s*(\[[\s\S]*?\])\s*\}\s*<\/?tool_call>/);
+        if (gemmaMatch) {
+            try {
+                const queries = JSON.parse(gemmaMatch[1]);
+                if (queries.length && queries.every(query => typeof query === 'string' && query.trim())) {
+                    return {
+                        tool: 'web-browsing',
+                        args: { query: queries.map(query => query.trim()).join(' ') }
+                    };
+                }
+            } catch {
+                return null;
+            }
+        }
+
         // 1. Try standard <tool_use> format
         // Also supports loose format like: <tool_use> <parameter=query> value </tool_use>
         const toolUseRegex = /<tool_use>([\s\S]*?)<\/tool_use>/;

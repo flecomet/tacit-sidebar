@@ -27,6 +27,9 @@ describe('ApiKeysSettings', () => {
     it('shows the form when the provider has no key; the first key becomes active', async () => {
         render(<ApiKeysSettings provider="openrouter" />);
         expect(screen.getByText('OpenRouter API Keys')).toBeDefined();
+        expect(screen.getByLabelText('API key').value).toBe('');
+        expect(screen.getByLabelText('API key').placeholder).toBe('No saved API key');
+        expect(screen.getByLabelText('API key').autocomplete).toBe('new-password');
         await addViaForm({ label: 'Work EU', key: 'eu-key', eu: true });
         const [k] = keys().openrouter;
         expect(k).toMatchObject({ label: 'Work EU', encryptedKey: 'encrypted-eu-key', baseUrl: 'https://eu.openrouter.ai/api/v1' });
@@ -56,6 +59,8 @@ describe('ApiKeysSettings', () => {
         render(<ApiKeysSettings provider="openai" />);
         await addViaForm({ label: 'Work', key: 'oa-key' });
         fireEvent.click(screen.getByRole('button', { name: 'Edit key Work' }));
+        expect(screen.getByLabelText('API key').value).toBe('');
+        expect(screen.getByLabelText('API key').placeholder).toBe('Leave blank to keep the current key');
         fireEvent.change(screen.getByLabelText('Key label'), { target: { value: 'Personal' } });
         fireEvent.click(screen.getByRole('button', { name: 'Save key' }));
         await waitFor(() => expect(keys().openai[0].label).toBe('Personal'));

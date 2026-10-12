@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { chatService } from '../services/chatService';
+import { isOpenRouterEuEndpoint } from '../services/openrouterPayload';
 
 // To run this test:
 // 1. Ensure .env has valid keys
 // 2. npm run test src/test/web_search_integration.test.jsx
+// Optional: VITE_OPENROUTER_BASE_URL selects the endpoint (default: the EU data-region endpoint).
 
 const ENV = process.env;
 
@@ -17,22 +19,29 @@ describe('Web Search Integration (Real Network Calls)', () => {
             return;
         }
 
+        const baseUrl = ENV.VITE_OPENROUTER_BASE_URL || 'https://eu.openrouter.ai/api/v1';
+        // The EU endpoint rejects the web plugin, so this run only checks a plain request there.
+        const isEu = isOpenRouterEuEndpoint(baseUrl);
+        if (isEu) {
+            console.warn('OpenRouter EU endpoint: web plugin not available, running without web search');
+        }
+
         try {
             const response = await chatService.sendMessage({
                 provider: 'openrouter',
-                baseUrl: 'https://openrouter.ai/api/v1',
+                baseUrl,
                 apiKey: ENV.VITE_OPENROUTER_API_KEY,
                 model: 'openai/gpt-oss-20b', // Low cost model
                 messages: [{ role: 'user', content: 'What is the capital of France?' }],
-                options: { webSearch: true }
+                options: { webSearch: !isEu }
             });
 
             expect(response.content).toBeDefined();
             console.log('OpenRouter Response:', response.content.slice(0, 100));
         } catch (error) {
             // Allow 402/403 (credits/auth) as success of "connecting and getting a response"
-            // We just want to ensure we didn't send a malformed payload that caused a client-side crash or 400 Bad Request
-            if (error.message.includes('402') || error.message.includes('403') || error.message.includes('credits') || error.message.includes('context length') || error.message.includes('too long')) {
+            // Context length and other 400 errors are not swallowed: they indicate a payload defect.
+            if (error.message.includes('402') || error.message.includes('403') || error.message.includes('credits')) {
                 console.log('OpenRouter Check Passed (Auth/Credit Error received implies payload was valid enough to reach gatekeeper)');
             } else {
                 throw error;

@@ -4,7 +4,13 @@
  * Handles payload formatting and API calls for different providers.
  */
 import { manualToolAdapter } from './manualToolAdapter';
+import { explicitSearchQuery } from './searchIntent';
 import { webSearchService } from './webSearchService';
+import { getOpenRouterWebFields } from './openrouterPayload';
+import { toNativeUrl, buildIntegrations, buildNativeInput, parseNativeResponse } from './lmStudioNative';
+
+const LM_STUDIO_FALLBACK_NOTICE = 'LM Studio MCP unavailable, using built-in search';
+const LM_STUDIO_AUTH_HINT = 'Enable Require Authentication, Allow calling servers from mcp.json, and set the token';
 
 export const chatService = {
     /**
@@ -27,9 +33,21 @@ export const chatService = {
                 return this.sendAnthropic({ baseUrl, apiKey, model, messages, options, signal });
             case 'google':
                 return this.sendGoogle({ baseUrl, apiKey, model, messages, options, signal });
+            case 'local':
+                // Opt-in LM Studio MCP search; the built-in XML search takes over only if the endpoint is missing or unreachable
+                if (options.lmStudioSearch?.integrationId && options.webSearch && explicitSearchQuery(messages) === null) {
+                    try {
+                        return await this.sendLmStudioNative({ baseUrl, apiKey, model, messages, options, signal });
+                    } catch (err) {
+                        if (!err.fallbackable) throw err;
+                        console.warn('[ChatService] LM Studio native endpoint unavailable, using built-in search:', err.message);
+                        const result = await this.sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options, signal });
+                        return { ...result, fallbackNotice: LM_STUDIO_FALLBACK_NOTICE };
+                    }
+                }
+                return this.sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options, signal });
             case 'openai':
             case 'openrouter':
-            case 'local':
             default:
                 return this.sendOpenAICompatible({ provider, baseUrl, apiKey, model, messages, options, signal });
         }
@@ -48,14 +66,29 @@ export const chatService = {
             return this.sendOpenAIResponses({ baseUrl, apiKey, model, messages, options, signal });
         }
 
-        const { webSearch, webSearchConfig, ...otherOptions } = options;
+        // modelMaxOutputTokens is metadata for the request, not a payload field, so it is removed here.
+        // lmStudioSearch is read by sendLmStudioNative and never belongs in the request body.
+        const { webSearch, webSearchConfig, modelMaxOutputTokens, lmStudioSearch, ...otherOptions } = options;
 
         let finalMessages = messages;
         let isLocalWebSearch = false;
 
         if (provider === 'local' && webSearch) {
-            isLocalWebSearch = true;
-            finalMessages = manualToolAdapter.injectHelper(messages);
+            const query = explicitSearchQuery(messages);
+            if (query !== null) {
+                if (!webSearchConfig) throw new Error('Web Search Config missing. Please configure in Settings.');
+                if (!query) throw new Error('Web search requires a text query.');
+                signal?.throwIfAborted();
+                const results = await webSearchService.search(webSearchConfig.provider, query, webSearchConfig);
+                signal?.throwIfAborted();
+                finalMessages = [
+                    ...messages,
+                    { role: 'user', content: `Current date: ${new Date().toISOString().split('T')[0]}\n${manualToolAdapter.formatToolResult(results)}\nUse the retrieved sources and include their links. Do not request another search.` }
+                ];
+            } else {
+                isLocalWebSearch = true;
+                finalMessages = manualToolAdapter.injectHelper(messages);
+            }
         }
 
         const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
@@ -112,9 +145,14 @@ export const chatService = {
             ...otherOptions
         };
 
-        if (provider === 'openrouter' && webSearch) {
-            payload.plugins = [{ id: "web" }];
-        }
+        // Web plugin, capped max_tokens, and no plugin on the EU endpoint (see openrouterPayload.js)
+        const { fields: webFields } = getOpenRouterWebFields({
+            provider,
+            baseUrl,
+            webSearch,
+            maxOutputTokens: modelMaxOutputTokens
+        });
+        Object.assign(payload, webFields);
 
         // Enable streaming for OpenRouter to support proper cancellation
         // When streaming is enabled, aborting the connection stops billing
@@ -171,47 +209,39 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
         let content = data.choices[0].message.content || '';
 
         // Handle Local Web Search Tool Call
-        if (isLocalWebSearch) {
-            const toolCall = manualToolAdapter.parseToolCall(content);
-            if (toolCall) {
-                console.log('[ChatService] Local Model Tool Call:', toolCall);
+        const toolCall = isLocalWebSearch ? manualToolAdapter.parseToolCall(content) : null;
+        if (toolCall) {
+            const query = toolCall.args.query;
 
-                let searchResults = [];
-                try {
-                    // Use config passed in options, or fallback to mock/defaults if testing
-                    if (webSearchConfig) {
-                        searchResults = await webSearchService.search(
-                            webSearchConfig.provider,
-                            toolCall.args.query,
-                            webSearchConfig
-                        );
-                    } else {
-                        // If no config but webSearch=true (maybe testing), mock or fail.
-                        // In prod, App.jsx ensures config is passed. 
-                        console.warn('Web Search Config missing, returning error.');
-                        throw new Error("Web Search Config missing. Please configure in Settings.");
-                    }
-                } catch (e) {
-                    console.error("Web Search Error", e);
-                    searchResults = [{ title: "Error", link: "", snippet: e.message }];
-                }
-
-                const toolOutput = manualToolAdapter.formatToolResult(searchResults);
-
-                // Recursion: Send back to model
-                const followUpMessages = [
-                    ...finalMessages,
-                    { role: 'assistant', content: content },
-                    { role: 'user', content: toolOutput }
-                ];
-
-                // Recursive call (disable webSearch to prevent loops)
-                return this.sendOpenAICompatible({
-                    provider, baseUrl, apiKey, model,
-                    messages: followUpMessages,
-                    options: { ...otherOptions, webSearch: false, webSearchConfig }
-                });
+            if (!webSearchConfig) {
+                throw new Error("Web Search Config missing. Please configure in Settings.");
             }
+            if (!query) {
+                throw new Error('Web search requires a text query.');
+            }
+            signal?.throwIfAborted();
+            const searchResults = await webSearchService.search(
+                webSearchConfig.provider,
+                query,
+                webSearchConfig
+            );
+            signal?.throwIfAborted();
+
+            const toolOutput = manualToolAdapter.formatToolResult(searchResults);
+
+            // Discard an answer generated before retrieval so it cannot anchor the grounded reply.
+            const followUpMessages = [
+                ...finalMessages,
+                ...(toolCall ? [{ role: 'assistant', content }] : []),
+                { role: 'user', content: toolOutput }
+            ];
+
+            return this.sendOpenAICompatible({
+                provider, baseUrl, apiKey, model,
+                messages: followUpMessages,
+                options: { ...otherOptions, webSearch: false, webSearchConfig },
+                signal
+            });
         }
 
         // Handle Tool Calls (e.g. if Native Search returns a call instead of result, or fallbacks)
@@ -252,6 +282,78 @@ Windows/Linux: Run 'OLLAMA_ORIGINS="*" ollama serve'`);
             attachments: attachments,
             usage: data.usage || { total_tokens: 0 }
         };
+    },
+
+    // --- LM Studio native chat (web search through MCP) ---
+    // Non-streaming POST /api/v1/chat. Errors with `fallbackable` set mean the endpoint is missing or unreachable.
+    async sendLmStudioNative({ baseUrl, apiKey, model, messages, options, signal }) {
+        const { integrationId, allowedTools } = options.lmStudioSearch;
+        const token = options.lmStudioSearch.token || apiKey;
+        const { system_prompt, input } = buildNativeInput(messages);
+
+        const headers = { "Content-Type": "application/json" };
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const payload = {
+            model,
+            input,
+            ...(system_prompt ? { system_prompt } : {}),
+            integrations: buildIntegrations({ integrationId, allowedTools }),
+            stream: false,
+            store: false
+        };
+
+        let response;
+        try {
+            response = await fetch(toNativeUrl(baseUrl), {
+                method: "POST",
+                headers,
+                body: JSON.stringify(payload),
+                signal
+            });
+        } catch (err) {
+            if (err.name === 'AbortError') throw err;
+            const unreachable = new Error(`LM Studio native endpoint unreachable: ${err.message}`);
+            unreachable.fallbackable = true;
+            throw unreachable;
+        }
+
+        if (!response.ok) {
+            const errText = await response.text();
+
+            if (response.status === 404 || response.status === 405) {
+                const missing = new Error(`LM Studio native endpoint not available (${response.status})`);
+                missing.fallbackable = true;
+                throw missing;
+            }
+
+            if (response.status >= 400 && response.status < 500) {
+                throw new Error(`LM Studio MCP request failed (${response.status}): ${errText || response.statusText}. ${LM_STUDIO_AUTH_HINT}.`);
+            }
+
+            throw new Error(`API Error ${response.status}: ${errText || response.statusText}`);
+        }
+
+        const text = await response.text();
+        if (!text) {
+            throw new Error('Empty response from API');
+        }
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error(`Failed to parse API response: ${text.slice(0, 100)}...`);
+        }
+
+        if (data.error) {
+            throw new Error(data.error.message || 'API Error');
+        }
+
+        const { content, toolCalls, usage } = parseNativeResponse(data);
+        return { content, attachments: [], usage, toolCalls };
     },
 
     // Appends OpenRouter image outputs to content as markdown and to attachments; returns the new content.

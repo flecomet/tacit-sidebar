@@ -5,6 +5,19 @@ All notable changes to Tacit will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Optional history encryption** - Encrypt conversation titles, messages, metadata, and attachments locally with automatic unlocking. Migration resumes in the background after interruption. The progress ring becomes a shield only after verification and legacy-value cleanup. Drafts and saved instructions remain outside its scope; the installation key does not protect against browser-profile recovery.
+- **Brave Search** - Local models can use Brave as their web search provider. Select Brave in the local search settings and save a Brave Search API key. The key is stored encrypted, and search requests go directly to Brave.
+- **LM Studio web search through MCP** - Optional setting for LM Studio 0.4.0 or newer. When enabled, web-search messages go to LM Studio's native chat endpoint (`/api/v1/chat`) with an MCP search server you name (an mcp.json server such as `mcp/my-search`, or a remote MCP URL). Tool calls are shown under the reply. If the endpoint is not available, Tacit falls back to the built-in Google, SerpApi or Serper search
+
+### Changed
+
+- **Extension name** - The extension is now named "Tacit – Private AI Sidebar for Local & Cloud Models" (previously "Tacit: Privacy-First AI Sidebar (OpenRouter, Local, OpenAI, Claude, Gemini)")
+- **Model catalog refresh** - The model catalog refresh workflow now runs every 8 hours instead of weekly on Mondays
+
 ## [1.2.2] - 2026-10-06
 
 ### Added

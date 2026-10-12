@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { chromeStorageAdapter } from './chromeStorageAdapter';
+import { chromeStorageAdapter, holdStorageWrites, releaseStorageWrites } from './chromeStorageAdapter';
+import { getHistoryStatus, restoreHistory, restoreHistorySession, prepareHistory, activateHistory, sendHistoryCommand } from '../services/historyClient';
+import { startHistorySync, withoutHistorySync, diffSessions, prepareHistoryCommand, settleHistoryWrites, getHistoryMessageId, markLegacyHistory } from './historySync';
 import { emptyKeys, emptyActive, addKey, updateKey, removeKey, setActiveKey, migrateKeysToV2 } from './apiKeys';
+import { DEFAULT_SORT } from '../services/modelFilters';
 
 const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -9,6 +12,60 @@ const generateId = () => {
     }
     return Date.now().toString() + Math.random().toString(36).substring(2);
 };
+
+let historyHydration = null;
+let historyHydrationStatus = null;
+let historyRoutingVersion = 0;
+const sessionRefreshes = new Map();
+
+// Adoption preserves local additions without truncating conversations changed in another panel.
+const mergeLocalHistory = (restored, local) => {
+    if (!local.length) return restored;
+    const merged = [...restored];
+    const indices = new Map(restored.map((session, index) => [session.id, index]));
+    for (const session of local) {
+        const index = indices.get(session.id);
+        if (index === undefined) {
+            merged.push(session);
+            continue;
+        }
+        const saved = merged[index];
+        let cursor = 0;
+        const missing = [];
+        for (const message of session.messages) {
+            const encoded = JSON.stringify(message);
+            let found = cursor;
+            while (found < saved.messages.length) {
+                const candidate = saved.messages[found];
+                const localId = getHistoryMessageId(message);
+                const savedId = getHistoryMessageId(candidate);
+                if (localId && savedId ? localId === savedId : JSON.stringify(candidate) === encoded) break;
+                found++;
+            }
+            if (found < saved.messages.length) cursor = found + 1;
+            else missing.push(message);
+        }
+        if (missing.length) merged[index] = { ...saved, updatedAt: Math.max(saved.updatedAt || 0, session.updatedAt || 0), messages: [...saved.messages, ...missing] };
+    }
+    return merged;
+};
+
+// The saved sort is validated while the settings load, so a corrupted blob cannot leave the picker in an
+// invalid state. A stored 'price' stays valid even on a direct provider; the picker displays it as default.
+const MODEL_SORT_KEYS = ['default', 'price', 'released', 'name'];
+// A stored sort is usable only when both the key and the direction are recognized; otherwise it falls
+// back to the whole default, so a valid key with a malformed direction cannot become that key ascending.
+const normalizeModelSort = (modelSort) => {
+    const key = MODEL_SORT_KEYS.includes(modelSort?.key) ? modelSort.key : null;
+    const dir = modelSort?.dir === 'asc' || modelSort?.dir === 'desc' ? modelSort.dir : null;
+    return key && dir ? { key, dir } : DEFAULT_SORT;
+};
+
+// The saved settings load asynchronously, and the restore needs the saved current session id.
+const settingsHydrated = () => new Promise((resolve) => {
+    if (useChatStore.persist.hasHydrated()) resolve();
+    else useChatStore.persist.onFinishHydration(() => resolve());
+});
 
 export const useChatStore = create(
     persist(
@@ -24,9 +81,160 @@ export const useChatStore = create(
             updateApiKey: (provider, id, patch) => set(state => updateKey(state, provider, id, patch)),
             removeApiKey: (provider, id) => set(state => removeKey(state, provider, id)),
             setActiveApiKey: (provider, id) => set(state => setActiveKey(state, provider, id)),
-            includeFreeModels: false,
-            setIncludeFreeModels: (include) => set({ includeFreeModels: include }),
             messages: [],
+            // Once history encryption is active, sessions live in the background-owned repository
+            // and leave the settings blob. A subscriber below turns session changes into commands.
+            historyEnabled: false, // saved with the settings so the next start knows before the restore finishes
+            historyLoaded: false,
+            historyWriteError: null,
+            historyNeedsReconcile: false,
+            historyRecoverySessions: [],
+            historyFailedCommands: [],
+            hydrateHistory: (knownStatus) => {
+                const baseline = get().sessions;
+                const markEnabled = () => withoutHistorySync(() => set(state => ({
+                    historyEnabled: true,
+                    historyLoaded: false,
+                    historyNeedsReconcile: state.historyNeedsReconcile || !state.historyEnabled,
+                })));
+                if (knownStatus?.enabled) { historyHydrationStatus = knownStatus; markEnabled(); }
+                if (historyHydration) return historyHydration;
+                historyHydration = (async () => {
+                    await settingsHydrated();
+                    try {
+                        const requestedVersion = historyRoutingVersion;
+                        const fetchedStatus = historyHydrationStatus || await getHistoryStatus();
+                        // An opt-in transition supersedes any status read started before it.
+                        if (!historyHydrationStatus && requestedVersion !== historyRoutingVersion) return null;
+                        const status = historyHydrationStatus || fetchedStatus;
+                        if (!status?.enabled) {
+                            set({ historyEnabled: false, historyLoaded: true, historyWriteError: null, historyNeedsReconcile: false });
+                            return status;
+                        }
+                        markEnabled();
+                        await settleHistoryWrites();
+                        let sessions = await restoreHistory();
+                        const localAdditions = () => get().sessions.flatMap(session => {
+                            const old = baseline.find(saved => saved.id === session.id);
+                            if (!old) return [session];
+                            const messages = session.messages.slice(old.messages.length);
+                            return messages.length ? [{ ...session, messages }] : [];
+                        });
+                        {
+                            let local;
+                            do {
+                                local = get().sessions;
+                                const candidates = get().historyNeedsReconcile ? local : localAdditions();
+                                const merged = mergeLocalHistory(sessions, [...candidates, ...get().historyRecoverySessions]);
+                                for (const command of diffSessions(sessions, merged)) {
+                                    const response = await sendHistoryCommand(prepareHistoryCommand(command, generateId, merged));
+                                    if (response?.error) throw new Error(response.message || response.error);
+                                }
+                                sessions = merged;
+                            } while (local !== get().sessions);
+                        }
+                        withoutHistorySync(() => set((state) => {
+                            const current = sessions.find(s => s.id === state.currentSessionId);
+                            const failures = state.historyFailedCommands.filter(command => command.type === 'history.delete' || command.type === 'history.truncate');
+                            return { historyEnabled: true, historyLoaded: true, sessions, messages: current ? current.messages : [], historyWriteError: failures.length ? state.historyWriteError : null, historyNeedsReconcile: false, historyRecoverySessions: [], historyFailedCommands: failures };
+                        }));
+                        return status;
+                    } catch (error) {
+                        set({ historyWriteError: error?.message || String(error) });
+                        return null;
+                    }
+                })().finally(() => { historyHydration = null; historyHydrationStatus = null; });
+                return historyHydration;
+            },
+            refreshHistorySession: (sessionId) => {
+                if (!get().historyEnabled || !get().historyLoaded) return get().hydrateHistory({ enabled: true });
+                const running = sessionRefreshes.get(sessionId);
+                if (running) { running.dirty = true; return running.promise; }
+                const refresh = { dirty: false, promise: null };
+                refresh.promise = (async () => {
+                    try {
+                        while (true) {
+                            refresh.dirty = false;
+                            await settleHistoryWrites();
+                            const baseline = get().sessions.find(session => session.id === sessionId);
+                            const saved = await restoreHistorySession(sessionId);
+                            await settleHistoryWrites();
+                            if (refresh.dirty || baseline !== get().sessions.find(session => session.id === sessionId)) continue;
+                            const pending = get().historyRecoverySessions.filter(session => session.id === sessionId);
+                            const restored = mergeLocalHistory(saved ? [saved] : [], pending)[0];
+                            withoutHistorySync(() => set(state => {
+                                const index = state.sessions.findIndex(session => session.id === sessionId);
+                                const sessions = [...state.sessions];
+                                if (restored && index >= 0) sessions[index] = restored;
+                                else if (restored) sessions.push(restored);
+                                else if (index >= 0) sessions.splice(index, 1);
+                                const current = sessions.find(session => session.id === state.currentSessionId);
+                                return { sessions, messages: current?.messages || [] };
+                            }));
+                            return restored || null;
+                        }
+                    } catch (error) {
+                        set({ historyWriteError: error?.message || String(error) });
+                        return null;
+                    }
+                })().finally(() => sessionRefreshes.delete(sessionId));
+                sessionRefreshes.set(sessionId, refresh);
+                return refresh.promise;
+            },
+            retryHistoryWrites: async () => {
+                set({ historyLoaded: false });
+                try {
+                    await settleHistoryWrites();
+                    for (const command of get().historyFailedCommands) {
+                        const response = await sendHistoryCommand(command);
+                        if (response?.error) throw new Error(response.message || response.error);
+                        set(state => ({ historyFailedCommands: state.historyFailedCommands.filter(failed => failed.commandId !== command.commandId) }));
+                    }
+                    return await get().hydrateHistory({ enabled: true });
+                } catch (error) {
+                    set({ historyWriteError: error?.message || String(error) });
+                    return null;
+                }
+            },
+            enableHistoryEncryption: async () => {
+                await settingsHydrated();
+                // The newest state is saved first because the background reads the saved blob as the migration source.
+                const options = useChatStore.persist.getOptions();
+                await options.storage.setItem(options.name, { state: options.partialize(get()), version: options.version });
+                try {
+                    await prepareHistory();
+                } catch (error) {
+                    try {
+                        const status = await getHistoryStatus();
+                        if (status?.enabled) await get().hydrateHistory(status);
+                    } catch (statusError) {
+                        withoutHistorySync(() => set({ historyLoaded: false, historyWriteError: statusError?.message || String(statusError) }));
+                    }
+                    throw error;
+                }
+                // From here the panel stops writing sessions to the blob; the held write is applied after activation.
+                historyRoutingVersion++;
+                holdStorageWrites();
+                markLegacyHistory(get().sessions);
+                withoutHistorySync(() => set({ historyEnabled: true, historyLoaded: true }));
+                try {
+                    return await activateHistory();
+                } catch (error) {
+                    try {
+                        const status = await getHistoryStatus();
+                        if (status?.enabled) {
+                            withoutHistorySync(() => set({ historyEnabled: true }));
+                        } else {
+                            withoutHistorySync(() => set({ historyEnabled: false }));
+                        }
+                    } catch (statusError) {
+                        withoutHistorySync(() => set({ historyEnabled: true, historyLoaded: false, historyNeedsReconcile: true, historyWriteError: statusError?.message || String(statusError) }));
+                    }
+                    throw error;
+                } finally {
+                    await releaseStorageWrites();
+                }
+            },
             model: 'anthropic/claude-4-sonnet',
             availableModels: [],
             setModel: (model) => set({ model }),
@@ -38,6 +246,10 @@ export const useChatStore = create(
 
             // Favorites
             favorites: [],
+
+            // Model picker sort and favorites-first, persisted with the settings
+            modelSort: DEFAULT_SORT,
+            favoritesFirst: false,
 
 
 
@@ -51,11 +263,31 @@ export const useChatStore = create(
             // Web Search Config (for Local Models)
             webSearchConfig: {
                 enabled: false,
-                provider: 'google',
-                encryptedApiKey: '',
-                cx: ''
+                provider: 'brave',
+                encryptedApiKey: ''
             },
-            setWebSearchConfig: (config) => set(state => ({ webSearchConfig: { ...state.webSearchConfig, ...config } })),
+            setWebSearchConfig: (config) => set(state => {
+                const current = state.webSearchConfig;
+                const provider = config.provider ?? current.provider;
+                const keysByProvider = {
+                    ...current.keysByProvider,
+                    [current.provider]: current.encryptedApiKey || ''
+                };
+                const encryptedApiKey = config.encryptedApiKey !== undefined
+                    ? config.encryptedApiKey
+                    : provider === current.provider ? current.encryptedApiKey : keysByProvider[provider] || '';
+                keysByProvider[provider] = encryptedApiKey;
+                return { webSearchConfig: { ...current, ...config, encryptedApiKey, keysByProvider } };
+            }),
+
+            // LM Studio web search through MCP (native /api/v1/chat, LM Studio 0.4.0 or newer)
+            lmStudioSearch: {
+                enabled: false,
+                integrationId: '', // 'mcp/<label>' or a remote MCP URL
+                allowedTools: '', // comma-separated, empty allows all tools of the server
+                encryptedToken: ''
+            },
+            setLmStudioSearch: (config) => set(state => ({ lmStudioSearch: { ...state.lmStudioSearch, ...config } })),
 
             toggleFavorite: (modelId) => set(state => {
                 const isFav = state.favorites.includes(modelId);
@@ -65,6 +297,9 @@ export const useChatStore = create(
                         : [...state.favorites, modelId]
                 };
             }),
+
+            setModelSort: (modelSort) => set({ modelSort }),
+            setFavoritesFirst: (favoritesFirst) => set({ favoritesFirst }),
 
             addMessage: (message) => set((state) => {
                 const newMessages = [...state.messages, message];
@@ -269,21 +504,29 @@ export const useChatStore = create(
             name: 'tacit-storage',
             storage: createJSONStorage(() => chromeStorageAdapter),
             partialize: (state) => ({
-                messages: state.messages,
+                ...(state.historyEnabled ? {} : { messages: state.messages, sessions: state.sessions }),
+                historyEnabled: state.historyEnabled,
                 model: state.model,
                 apiKeys: state.apiKeys,
                 activeKeyId: state.activeKeyId,
                 activeCloudProvider: state.activeCloudProvider,
-                sessions: state.sessions,
                 currentSessionId: state.currentSessionId,
                 favorites: state.favorites,
+                modelSort: state.modelSort,
+                favoritesFirst: state.favoritesFirst,
 
-                includeFreeModels: state.includeFreeModels,
                 providerMode: state.providerMode,
                 localBaseUrl: state.localBaseUrl,
-                webSearchConfig: state.webSearchConfig
+                webSearchConfig: state.webSearchConfig,
+                lmStudioSearch: state.lmStudioSearch
             }),
-            version: 2,
+            merge: (persisted, current) => ({
+                ...current,
+                ...persisted,
+                modelSort: normalizeModelSort(persisted?.modelSort),
+                favoritesFirst: persisted?.favoritesFirst === true
+            }),
+            version: 5,
             migrate: (persisted, version) => {
                 if (!persisted) return persisted;
                 if (version < 1) {
@@ -294,8 +537,34 @@ export const useChatStore = create(
                     delete persisted.customBaseUrl;
                 }
                 if (version < 2) persisted = migrateKeysToV2(persisted);
+                if (version < 4) delete persisted.includeFreeModels;
+                if (version < 5) {
+                    persisted.modelSort = DEFAULT_SORT;
+                    persisted.favoritesFirst = false;
+                }
                 return persisted;
             }
         }
     )
 );
+
+startHistorySync({
+    store: useChatStore,
+    send: sendHistoryCommand,
+    createId: generateId,
+    onError: (message) => useChatStore.setState({ historyWriteError: message }),
+    onFailure: (command, error) => {
+        if (error?.code !== 'HISTORY_REVISION_CONFLICT') {
+            useChatStore.setState(state => ({ historyFailedCommands: [...state.historyFailedCommands, command] }));
+        }
+        if (command.type === 'history.append' || command.type === 'history.create') {
+            const session = command.type === 'history.create' ? command.session : { ...command.session, messages: [command.message] };
+            useChatStore.setState(state => ({ historyRecoverySessions: [...state.historyRecoverySessions, session] }));
+        }
+        if (error?.code === 'HISTORY_REVISION_CONFLICT') {
+            useChatStore.getState().hydrateHistory({ enabled: true }).then(() => {
+                useChatStore.setState({ historyWriteError: 'History changed in another panel. Unsaved messages were preserved; review the conversation before editing again.' });
+            });
+        }
+    },
+});

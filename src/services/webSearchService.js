@@ -23,6 +23,8 @@ export const webSearchService = {
                 return this.serpApiSearch(query, config.apiKey);
             case 'serper':
                 return this.serperSearch(query, config.apiKey);
+            case 'brave':
+                return this.braveSearch(query, config.apiKey);
             // Add other providers as needed
             default:
                 throw new Error(`Unsupported search provider: ${provider}`);
@@ -54,6 +56,31 @@ export const webSearchService = {
             title: item.title,
             link: item.link,
             snippet: item.snippet
+        }));
+    },
+
+    async braveSearch(query, apiKey) {
+        if (!apiKey) throw new Error('Missing Brave Search API Key');
+
+        const url = new URL('https://api.search.brave.com/res/v1/web/search');
+        url.searchParams.set('q', query);
+        const res = await fetch(url.toString(), {
+            headers: {
+                'Accept': 'application/json',
+                'X-Subscription-Token': apiKey
+            }
+        });
+
+        if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Brave Search Error: ${res.status} - ${err}`);
+        }
+
+        const data = await res.json();
+        return (data.web?.results || []).map(item => ({
+            title: item.title,
+            link: item.url,
+            snippet: item.description || ''
         }));
     },
 

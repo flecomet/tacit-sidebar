@@ -4,41 +4,38 @@ import { useChatStore } from '../store/useChatStore';
 
 // Access the API key from environment variables
 const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-const baseUrl = import.meta.env.VITE_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+const baseUrl = import.meta.env.VITE_OPENROUTER_BASE_URL || 'https://eu.openrouter.ai/api/v1';
 
-// Conditional execution wrapper: Only run if API key is present
-const describeIntegration = apiKey ? describe : describe.skip;
+// Live tests run only with an explicit opt-in and a key.
+const describeIntegration = apiKey && import.meta.env.VITE_OPENROUTER_LIVE_TEST === 'true' ? describe : describe.skip;
+// Paid completion calls need a second opt-in.
+const itPaidChat = import.meta.env.VITE_OPENROUTER_CHAT_TEST === 'true' ? it : it.skip;
 
 describeIntegration('OpenRouter Real API Integration', () => {
 
     beforeAll(() => {
         // Inject the key into the store just in case components are mounted
         useChatStore.getState().addApiKey('openrouter', { encryptedKey: apiKey });
-        console.log("Running integration tests with provided API Key.");
     });
 
-    it('should can fetch models (public or authenticated)', async () => {
-        // modelService.fetchModels currently doesn't require a key, 
-        // but this verifies we can reach the OpenRouter API from this environment.
-        const models = await fetchModels();
-        expect(models).toBeDefined();
+    it('can fetch the authorized models', async () => {
+        const models = await fetchModels(baseUrl, 'openrouter', apiKey);
         expect(Array.isArray(models)).toBe(true);
-        expect(models.length).toBeGreaterThan(0);
-        console.log("Available models:", models.slice(0, 5).map(m => m.id));
-
-        // Check structure of first model
-        const first = models[0];
-        expect(first).toHaveProperty('id');
-        expect(first).toHaveProperty('name');
+        // An authorized list can legitimately be empty.
+        for (const first of models.slice(0, 1)) {
+            expect(first).toHaveProperty('id');
+            expect(first).toHaveProperty('name');
+        }
     });
 
-    it('should receive a response from chat completions endpoint', async () => {
+    itPaidChat('should receive a response from chat completions endpoint', async (ctx) => {
         // Pick from the live list so the test never pins a retired model id.
-        const models = await fetchModels(baseUrl, false, 'openrouter', apiKey);
+        const models = await fetchModels(baseUrl, 'openrouter', apiKey);
         const paidText = models
             // Skip variant ids (':batch', ':free', ...): batch variants reject chat/completions.
             .filter(m => !m.id.includes(':') && m.architecture?.output_modalities?.includes('text') && Number(m.pricing?.prompt) > 0)
             .sort((a, b) => Number(a.pricing.prompt) - Number(b.pricing.prompt));
+        if (!paidText.length) ctx.skip('no paid text model in the live list');
         const modelToUse = (paidText.find(m => /gemini.*flash/.test(m.id)) || paidText[0]).id;
 
         const payload = {

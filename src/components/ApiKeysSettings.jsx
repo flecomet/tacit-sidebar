@@ -79,8 +79,8 @@ export default function ApiKeysSettings({ provider }) {
                 <div className="space-y-2 p-2 rounded border border-brand-border">
                     <input aria-label="Key label" value={editing.label} placeholder="Label (e.g. EU)" className={INPUT}
                         onChange={e => setForm({ ...editing, label: e.target.value })} />
-                    <input aria-label="API key" type="password" value={editing.key} className={INPUT}
-                        placeholder={editing.id ? 'Leave blank to keep the current key' : 'sk-...'}
+                    <input aria-label="API key" type="password" autoComplete="new-password" value={editing.key} className={INPUT}
+                        placeholder={editing.id ? 'Leave blank to keep the current key' : 'No saved API key'}
                         onChange={e => setForm({ ...editing, key: e.target.value })} />
                     {hasEndpoint && (
                         <>

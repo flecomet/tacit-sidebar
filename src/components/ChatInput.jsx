@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Square, Paperclip, FileDown, Globe } from 'lucide-react';
+import { Send, Square, Paperclip, FileDown, Globe, Pencil, Trash2 } from 'lucide-react';
 import { useChatStore } from '../store/useChatStore';
 import { useDraftStore } from '../store/useDraftStore';
 import { usePromptsStore } from '../store/usePromptsStore';
@@ -8,10 +8,17 @@ import { getModelCategory } from '../services/modelService';
 import { supportsImageInput } from '../services/modelCatalog';
 import ModelPicker from './ModelPicker';
 import { sessionCost, formatCost } from '../services/usage';
+import { WEB_SEARCH_PREFIX } from '../services/searchIntent';
 
-export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider }) {
+export default function ChatInput({
+    onSend, onStop, onUpload, onReadPage, isLoading, disabled, providerMode, activeProvider,
+    catalogStatus = 'ready', catalogError = '', onRefreshModels, onOpenSettings,
+}) {
     const { model, availableModels, messages } = useChatStore();
     const chatCost = sessionCost(messages);
+    // Same rule as App's handleSend. Without a key Send stays usable, so App can open Settings instead.
+    const isCatalogBlocked = activeProvider === 'openrouter' && catalogStatus !== 'missing-key'
+        && (catalogStatus !== 'ready' || !model);
     const { draft, setDraft } = useDraftStore();
 
     // Use draft from store instead of local state
@@ -21,7 +28,9 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
     const [webSearchEnabled, setWebSearchEnabled] = useState(false);
 
     // Prompt picker state
-    const { savedPrompts } = usePromptsStore();
+    const { savedPrompts, updatePrompt, deletePrompt } = usePromptsStore();
+    const [editingPrompt, setEditingPrompt] = useState(null);
+    const [deletingPromptId, setDeletingPromptId] = useState(null);
     const [showPromptPicker, setShowPromptPicker] = useState(false);
     const [selectedPromptIndex, setSelectedPromptIndex] = useState(0);
 
@@ -47,6 +56,12 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
 
     // Check for slash command
     const isSlashCommand = input.startsWith('/');
+    const showSearchSuggestion = webSearchEnabled && !disabled && !isLoading && !isSlashCommand
+        && !input.trimStart().startsWith(WEB_SEARCH_PREFIX.trimEnd());
+    const acceptSearchSuggestion = () => {
+        setInput(WEB_SEARCH_PREFIX + input);
+        textareaRef.current?.focus();
+    };
     const slashFilter = isSlashCommand ? input.slice(1).toLowerCase() : '';
     const filteredPrompts = isSlashCommand
         ? savedPrompts.filter(p => p.name.toLowerCase().includes(slashFilter))
@@ -62,12 +77,31 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
         }
     }, [isSlashCommand, savedPrompts.length]);
 
+    useEffect(() => {
+        setSelectedPromptIndex(0);
+    }, [slashFilter]);
+
+    const activePromptIndex = Math.min(selectedPromptIndex, Math.max(0, filteredPrompts.length - 1));
+
+    const closePromptAction = () => {
+        setEditingPrompt(null);
+        setDeletingPromptId(null);
+        textareaRef.current?.focus();
+    };
+
     const handlePromptSelect = (prompt) => {
         setInput(prompt.content);
         setShowPromptPicker(false);
     };
 
     const handleKeyDown = (e) => {
+        if (e.key === 'ArrowRight' && !e.nativeEvent.isComposing && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey
+            && showSearchSuggestion && e.currentTarget.selectionStart === input.length
+            && e.currentTarget.selectionEnd === input.length) {
+            e.preventDefault();
+            acceptSearchSuggestion();
+            return;
+        }
         // Handle prompt picker navigation
         if (showPromptPicker && filteredPrompts.length > 0) {
             if (e.key === 'ArrowDown') {
@@ -84,7 +118,7 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
             }
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handlePromptSelect(filteredPrompts[selectedPromptIndex]);
+                handlePromptSelect(filteredPrompts[activePromptIndex]);
                 return;
             }
             if (e.key === 'Escape') {
@@ -186,46 +220,110 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
                         onClick={() => !isFreeModel && setWebSearchEnabled(!webSearchEnabled)}
                         disabled={disabled || isFreeModel}
                         className={`p-2 cursor-pointer transition-colors flex items-center gap-1 ${webSearchEnabled ? 'text-brand-cyan hover:text-cyan-400' : 'text-gray-400 hover:text-gray-200 disabled:text-gray-600'}`}
-                        title={isFreeModel ? "Unavailable for free models" : (webSearchEnabled ? "Disable Web Search" : "Enable Web Search")}
+                        title={isFreeModel ? "Unavailable for free models" : (webSearchEnabled ? "Web search allowed when needed. Accept the prefix to request a search." : "Enable Web Search")}
                         aria-label={isFreeModel ? "Unavailable for free models" : (webSearchEnabled ? "Disable Web Search" : "Enable Web Search")}
                     >
                         <Globe size={20} className={isFreeModel ? "opacity-50" : ""} />
                     </button>
                 )}
 
-                <ModelPicker providerMode={providerMode} activeProvider={activeProvider} />
+                <ModelPicker providerMode={providerMode} activeProvider={activeProvider}
+                    catalogStatus={catalogStatus} catalogError={catalogError}
+                    onRefreshModels={onRefreshModels} onOpenSettings={onOpenSettings} />
 
                 {/* Text Input with Prompt Picker */}
                 <div className="relative flex-1">
                     {/* Prompt Picker Dropdown */}
                     {showPromptPicker && filteredPrompts.length > 0 && (
-                        <div className="absolute bottom-full left-0 right-0 mb-1 max-h-48 bg-brand-card border border-brand-border rounded-lg shadow-lg overflow-hidden z-30">
-                            <div className="overflow-y-auto max-h-48">
+                        <div className="absolute bottom-full left-0 right-0 mb-1 max-h-80 bg-brand-card border border-brand-border rounded-lg shadow-lg overflow-hidden z-30">
+                            <div className="overflow-y-auto max-h-80">
                                 {filteredPrompts.map((prompt, index) => (
-                                    <div
-                                        key={prompt.id}
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={() => handlePromptSelect(prompt)}
-                                        className={`px-3 py-2 text-sm cursor-pointer border-b border-brand-border last:border-0 ${index === selectedPromptIndex
-                                            ? 'bg-brand-cyan/20 text-white'
-                                            : 'text-gray-300 hover:bg-white/5'
-                                            }`}
-                                    >
-                                        <div className="font-medium truncate">{prompt.name}</div>
-                                        <div className="text-xs text-gray-500 truncate mt-0.5">{prompt.content.slice(0, 60)}...</div>
+                                    <div key={prompt.id} className="border-b border-brand-border last:border-0">
+                                        {editingPrompt?.id === prompt.id ? (
+                                            <form
+                                                className="p-3 flex flex-col gap-2 text-sm"
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    if (!editingPrompt.name.trim() || !editingPrompt.content.trim()) return;
+                                                    updatePrompt(prompt.id, { name: editingPrompt.name.trim(), content: editingPrompt.content });
+                                                    closePromptAction();
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Escape') { e.preventDefault(); closePromptAction(); }
+                                                }}
+                                            >
+                                                <label className="text-gray-300">
+                                                    Prompt name
+                                                    <input autoFocus value={editingPrompt.name}
+                                                        onChange={(e) => setEditingPrompt({ ...editingPrompt, name: e.target.value })}
+                                                        className="mt-1 w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan" />
+                                                </label>
+                                                <label className="text-gray-300">
+                                                    Prompt text
+                                                    <textarea value={editingPrompt.content} rows={4}
+                                                        onChange={(e) => setEditingPrompt({ ...editingPrompt, content: e.target.value })}
+                                                        className="mt-1 w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan" />
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    <button type="submit" disabled={!editingPrompt.name.trim() || !editingPrompt.content.trim()}
+                                                        className="px-2 py-1 rounded bg-brand-cyan text-brand-dark disabled:opacity-40">Save changes</button>
+                                                    <button type="button" onClick={closePromptAction} className="px-2 py-1 text-gray-300">Cancel</button>
+                                                </div>
+                                            </form>
+                                        ) : deletingPromptId === prompt.id ? (
+                                            <div className="p-3 text-sm text-gray-300" onKeyDown={(e) => {
+                                                if (e.key === 'Escape') { e.preventDefault(); closePromptAction(); }
+                                            }}>
+                                                <p>Delete “{prompt.name}”? This cannot be undone.</p>
+                                                <div className="flex gap-2 mt-2">
+                                                    <button type="button" autoFocus onClick={() => { deletePrompt(prompt.id); closePromptAction(); }}
+                                                        className="px-2 py-1 rounded bg-red-600 text-white">Confirm delete</button>
+                                                    <button type="button" onClick={closePromptAction} className="px-2 py-1">Cancel</button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={`flex items-center text-sm ${index === activePromptIndex
+                                                ? 'bg-brand-cyan/20 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                                                <button type="button" onMouseDown={(e) => e.preventDefault()}
+                                                    onClick={() => handlePromptSelect(prompt)}
+                                                    className="min-w-0 flex-1 px-3 py-2 text-left">
+                                                    <div className="font-medium truncate">{prompt.name}</div>
+                                                    <div className="text-xs text-gray-500 truncate mt-0.5">{prompt.content.slice(0, 60)}...</div>
+                                                </button>
+                                                <button type="button" aria-label={`Edit ${prompt.name}`} title="Edit prompt"
+                                                    onClick={() => { setEditingPrompt({ ...prompt }); setDeletingPromptId(null); }}
+                                                    className="p-2 text-gray-400 hover:text-brand-cyan"><Pencil size={16} /></button>
+                                                <button type="button" aria-label={`Delete ${prompt.name}`} title="Delete prompt"
+                                                    onClick={() => { setDeletingPromptId(prompt.id); setEditingPrompt(null); }}
+                                                    className="p-2 mr-1 text-gray-400 hover:text-red-400"><Trash2 size={16} /></button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
+                    {showSearchSuggestion && (
+                        <button
+                            type="button"
+                            aria-label="Insert web search prefix"
+                            title="Right Arrow at the end of your prompt inserts this prefix. Otherwise search stays optional."
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={acceptSearchSuggestion}
+                            className="w-full flex gap-2 items-center text-left text-sm text-gray-500 hover:text-gray-300 bg-brand-input border border-b-0 border-brand-border rounded-t-lg px-3 pt-2 pb-1"
+                        >
+                            <span className="flex-1">{WEB_SEARCH_PREFIX}</span>
+                            <kbd className="text-xs" aria-hidden="true">→</kbd>
+                        </button>
+                    )}
                     <textarea
                         ref={textareaRef}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask... (type / for prompts)"
-                        className="w-full resize-none bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan max-h-[160px] min-h-[40px] placeholder-gray-500 overflow-y-auto"
+                        className={`w-full resize-none bg-brand-input border border-brand-border ${showSearchSuggestion ? 'rounded-b-lg border-t-0' : 'rounded-lg'} px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-cyan max-h-[160px] min-h-[40px] placeholder-gray-500 overflow-y-auto`}
                         rows={1}
                     />
                 </div>
@@ -242,7 +340,7 @@ export default function ChatInput({ onSend, onStop, onUpload, onReadPage, isLoad
                 ) : (
                     <button
                         onClick={handleSend}
-                        disabled={!input.trim() || disabled}
+                        disabled={!input.trim() || disabled || isCatalogBlocked}
                         className="p-2 bg-brand-cyan text-brand-dark rounded-lg hover:opacity-90 disabled:bg-brand-input disabled:text-gray-500 transition-all shadow-sm active:scale-95"
                         aria-label="Send"
                     >

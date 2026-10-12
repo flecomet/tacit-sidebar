@@ -20,8 +20,24 @@ const toUnix = (iso) => {
 };
 const byNewest = (a, b) => (b.created || 0) - (a.created || 0);
 
+/**
+ * Strict price parser: accepts finite, non-negative numbers or numeric strings.
+ * Missing, empty, boolean, negative (router sentinels) and non-finite values give null,
+ * so absent data is never read as zero.
+ */
+export const parseModelPrice = (value) => {
+    if (typeof value !== 'number' && typeof value !== 'string') return null;
+    if (typeof value === 'string' && !value.trim()) return null;
+    const price = Number(value);
+    return Number.isFinite(price) && price >= 0 ? price : null;
+};
+
+/**
+ * True when both text-token prices are explicitly zero. It does not guarantee that a whole
+ * operation costs zero (per-request, image or audio charges are not considered here).
+ */
 export const isFreePricing = (pricing) =>
-    !!pricing && Number(pricing.prompt) === 0 && Number(pricing.completion) === 0;
+    !!pricing && parseModelPrice(pricing.prompt) === 0 && parseModelPrice(pricing.completion) === 0;
 
 const maxParamBillions = (id) => {
     const sizes = [...id.matchAll(/(\d+(?:\.\d+)?)b(?![a-z])/g)].map(m => parseFloat(m[1]));

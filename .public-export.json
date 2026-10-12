@@ -1,0 +1,593 @@
+{
+  "version": 1,
+  "files": {
+    ".github/dependabot.yml": {
+      "mode": "100644",
+      "oid": "3189e926d34bc286f384d95a0825d569ab089a84"
+    },
+    ".github/workflows/ci.yml": {
+      "mode": "100644",
+      "oid": "31210e2253db09189d12cf8ac345a558327293da"
+    },
+    ".github/workflows/model-catalog.yml": {
+      "mode": "100644",
+      "oid": "6273146d702d3c7b4f4de34767743bfe866f87c7"
+    },
+    ".github/workflows/security.yml": {
+      "mode": "100644",
+      "oid": "d1900273fb15fce13802af98b9d3bfb8967adc96"
+    },
+    ".gitignore": {
+      "mode": "100644",
+      "oid": "0420a37689827f24d85dfaf40c4190e2054047a3"
+    },
+    "CHANGELOG.md": {
+      "mode": "100644",
+      "oid": "12828b5ba038dc5566173e9e9e29253c884881f4"
+    },
+    "LICENSE": {
+      "mode": "100644",
+      "oid": "905151474c66865272157e002ea29b4b1f6d9fef"
+    },
+    "README.md": {
+      "mode": "100644",
+      "oid": "989a98481feb6fbac1d1bbd3ed99eb7a8bea67d0"
+    },
+    "assets/screenshots/model_selection.png": {
+      "mode": "100644",
+      "oid": "477f66b9882c50821c8fd4680b3217cbe29a8c00"
+    },
+    "assets/screenshots/monstera_png_pdf.png": {
+      "mode": "100644",
+      "oid": "717b3f11728f750ad27736f9d7fc44183593cac0"
+    },
+    "assets/screenshots/wikipedia_infographics.png": {
+      "mode": "100644",
+      "oid": "aa9e38f5ec22493ce539509866e775839d97f0be"
+    },
+    "assets/screenshots/yahoo_finance.png": {
+      "mode": "100644",
+      "oid": "b772b6e224e79fa7d72ed0d502d37819a5a42c7c"
+    },
+    "docs/history-encryption-verification.md": {
+      "mode": "100644",
+      "oid": "4f3f7b0c14155d9354bbd80f57171db79060a434"
+    },
+    "docs/public-export.md": {
+      "mode": "100644",
+      "oid": "d8ed1430569844bd18c6b0df3e7569f57a0bacca"
+    },
+    "package-lock.json": {
+      "mode": "100644",
+      "oid": "f30518b3bae9ab611480d984225b2a3848c988d4"
+    },
+    "package.json": {
+      "mode": "100644",
+      "oid": "e620e008d26bc7d1d2038ccfa62476cdbcd7aac0"
+    },
+    "postcss.config.js": {
+      "mode": "100644",
+      "oid": "d41ad63557e97efa6032f82f33c7a7d03bf909fa"
+    },
+    "public/favicon.png": {
+      "mode": "100644",
+      "oid": "ddc807b33e28931817375a95d8646db34dda4180"
+    },
+    "public/favicon128.png": {
+      "mode": "100644",
+      "oid": "c36ac192b8cabeb5ed835984cbff7bb5ba39d1fb"
+    },
+    "public/manifest.json": {
+      "mode": "100644",
+      "oid": "538332541cd4fb5798c9a1a9e3dd9a053c8ac348"
+    },
+    "public/pdf.worker.min.js": {
+      "mode": "100644",
+      "oid": "6ad1774ce34bdad8000a1d62498aae2ff2665994"
+    },
+    "scripts/benchmark-history-migration.mjs": {
+      "mode": "100644",
+      "oid": "ce6ce0dd12e11a6a2bfcbda4abd5e3da618c9005"
+    },
+    "scripts/build-extension.sh": {
+      "mode": "100755",
+      "oid": "c6ed2876d64b0a43e6efe6c9f0c87592ebd22cdf"
+    },
+    "scripts/check-models.mjs": {
+      "mode": "100644",
+      "oid": "fa4f4bbc29fca4ba5ff0694755a45259eba573f5"
+    },
+    "scripts/e2e-history-encryption.mjs": {
+      "mode": "100644",
+      "oid": "2ec933b1eacbe1eef97a423f4de230cf12ad9656"
+    },
+    "scripts/publish-public.mjs": {
+      "mode": "100644",
+      "oid": "75fec3d3f9e441e49a55bc2889f2e90a666e9bf3"
+    },
+    "scripts/publish-public.test.js": {
+      "mode": "100644",
+      "oid": "c86bcd7849afb03fae273cc9b931863d9d2c4302"
+    },
+    "src/background/historyService.js": {
+      "mode": "100644",
+      "oid": "366321e68a5e38fbb17a4e3541da38ea91528792"
+    },
+    "src/background/historyService.test.js": {
+      "mode": "100644",
+      "oid": "717b19c07e4eca40374f093d52453c352588c444"
+    },
+    "src/background/index.js": {
+      "mode": "100644",
+      "oid": "8aa7483299f1e79c640b80184c35b2f3a9596489"
+    },
+    "src/background/index.test.js": {
+      "mode": "100644",
+      "oid": "ac1d837ec9e5caf938829d471d183035d10621ac"
+    },
+    "src/components/ApiKeysSettings.jsx": {
+      "mode": "100644",
+      "oid": "75f64d3b18d404dc5b81409cdc40c3f600c56e72"
+    },
+    "src/components/ApiKeysSettings.test.jsx": {
+      "mode": "100644",
+      "oid": "72ee860337d47ec5fee509e3a6e00415ce3f84e6"
+    },
+    "src/components/ChatInput.jsx": {
+      "mode": "100644",
+      "oid": "515c66a383d8027ddc07a64a285e0546781c89bc"
+    },
+    "src/components/ChatInput.prompts.test.jsx": {
+      "mode": "100644",
+      "oid": "3b8d44430de065a735b1aed0fd642c7957ee7eb7"
+    },
+    "src/components/ChatInput.search.test.jsx": {
+      "mode": "100644",
+      "oid": "b837481637454f3fd521ababc35e873371bf87ea"
+    },
+    "src/components/ChatInput.test.jsx": {
+      "mode": "100644",
+      "oid": "247accb1fde548d13f7c465d67534c6ca7a78089"
+    },
+    "src/components/ChatInput_AutoExpand.test.jsx": {
+      "mode": "100644",
+      "oid": "f398b86cb4b1a63da44c0bdce5b709e9896d06a1"
+    },
+    "src/components/ChatInput_Cost.test.jsx": {
+      "mode": "100644",
+      "oid": "f0f79caf8be0f480901336e32952875c377a9442"
+    },
+    "src/components/ChatInput_Local.test.jsx": {
+      "mode": "100644",
+      "oid": "9b54c833b5bea84cf2b23fa845f1be77856b95bb"
+    },
+    "src/components/DocViewerModal.jsx": {
+      "mode": "100644",
+      "oid": "406ba6252cf69b22be53d340dc8f75427b0016f5"
+    },
+    "src/components/EncryptionStatus.jsx": {
+      "mode": "100644",
+      "oid": "ba49bbae18663210ff450fad52f67a4d16d9b541"
+    },
+    "src/components/EncryptionStatus.layout.test.jsx": {
+      "mode": "100644",
+      "oid": "5206987682145071e3d85119e7dd55805cfa8947"
+    },
+    "src/components/EncryptionStatus.test.jsx": {
+      "mode": "100644",
+      "oid": "ffb0b64e329be549722eeaf1eae1bde4e7d09bb5"
+    },
+    "src/components/HistoryEncryptionSettings.jsx": {
+      "mode": "100644",
+      "oid": "07f288b46a954a1b7a42f1a3f11f988c30335e32"
+    },
+    "src/components/HistoryEncryptionSettings.test.jsx": {
+      "mode": "100644",
+      "oid": "99fe2dbaa5b24597053a7b32f591aba4025091e7"
+    },
+    "src/components/HistorySidebar.jsx": {
+      "mode": "100644",
+      "oid": "1285c14195981cc875bbf57ab6c432c6d61fd497"
+    },
+    "src/components/HistorySidebar.test.jsx": {
+      "mode": "100644",
+      "oid": "dd235c398925421987326f2ef2894c61fd50a765"
+    },
+    "src/components/MessageList.jsx": {
+      "mode": "100644",
+      "oid": "14493c4fc37ab47de7df2854e0f098b56ccd86c3"
+    },
+    "src/components/MessageList.test.jsx": {
+      "mode": "100644",
+      "oid": "4be9ab7d5be6b1e8b242a1744e7d62c36e939eb5"
+    },
+    "src/components/MessageList_Copy.test.jsx": {
+      "mode": "100644",
+      "oid": "1c2f1592e158993024ebf61c42da65215752bf27"
+    },
+    "src/components/ModelPicker.jsx": {
+      "mode": "100644",
+      "oid": "06e9fbf910369a9fe9e9af6ceecc96e805b83106"
+    },
+    "src/components/ModelPicker.test.jsx": {
+      "mode": "100644",
+      "oid": "023962b2a667b824bffa0cd1e11f0f38c9ed850c"
+    },
+    "src/content/index.js": {
+      "mode": "100644",
+      "oid": "3e7c667530b0f720e15281a0a25a40a59bcf7ca5"
+    },
+    "src/hooks/useExtensionStorage.js": {
+      "mode": "100644",
+      "oid": "eff807779d576273a17d25985dd72a74c163484f"
+    },
+    "src/hooks/useExtensionStorage.test.js": {
+      "mode": "100644",
+      "oid": "81b588070979fe43f210615aa2a142c67e5eabea"
+    },
+    "src/hooks/useHistoryEncryptionStatus.js": {
+      "mode": "100644",
+      "oid": "d976bb53df281764b2a327fd7e601a935754471f"
+    },
+    "src/hooks/useHistoryEncryptionStatus.test.js": {
+      "mode": "100644",
+      "oid": "796f3767d67d97993178da5fe49a72d219932aeb"
+    },
+    "src/index.css": {
+      "mode": "100644",
+      "oid": "46aa25104fc51be37247cfd4d21cb8a80e3803c0"
+    },
+    "src/services/__fixtures__/anthropic-models.json": {
+      "mode": "100644",
+      "oid": "90a137bb0b994a6854c94ff37926b820d3974e79"
+    },
+    "src/services/__fixtures__/google-models.json": {
+      "mode": "100644",
+      "oid": "efbdfe12a8fcd3a51def468a8f2a2922df6bdb81"
+    },
+    "src/services/__fixtures__/openai-models.json": {
+      "mode": "100644",
+      "oid": "328b17afcf76f733c52037ec28c0ee417ae0dfd1"
+    },
+    "src/services/__fixtures__/openrouter-models.json": {
+      "mode": "100644",
+      "oid": "11148609e0f98f9968e9428ddcd5d5a8b95e66df"
+    },
+    "src/services/chatService.js": {
+      "mode": "100644",
+      "oid": "6f87b3c511ef3a56c22528149c8567c278b281f5"
+    },
+    "src/services/chatService.test.js": {
+      "mode": "100644",
+      "oid": "dd15a5d7a50b31bc9910ed93501f1962d7bd66d7"
+    },
+    "src/services/chatService_google.test.js": {
+      "mode": "100644",
+      "oid": "b22baacfe4d77f0450dcdc677f56988d13f127e9"
+    },
+    "src/services/chatService_lmstudio.test.js": {
+      "mode": "100644",
+      "oid": "b3038e3c7870d012d24108dc47a102b7a857f4a0"
+    },
+    "src/services/chatService_nano_reasoning.test.js": {
+      "mode": "100644",
+      "oid": "7dbe087238e6845ec06b85bf359598bd172edc04"
+    },
+    "src/services/chatService_payload.test.js": {
+      "mode": "100644",
+      "oid": "1bd467c615c6d3a1bf0d9ed89b5c885823c90579"
+    },
+    "src/services/historyClient.js": {
+      "mode": "100644",
+      "oid": "ba38ca1690ebbf7aa822048b28fd84f6873e091d"
+    },
+    "src/services/historyClient.test.js": {
+      "mode": "100644",
+      "oid": "da8759dd236901d18fcfdd900a82c2ff4b7fe4a1"
+    },
+    "src/services/historyCrypto.js": {
+      "mode": "100644",
+      "oid": "0b41d18220587e7e3e6bd07eccee056e534905ee"
+    },
+    "src/services/historyCrypto.test.js": {
+      "mode": "100644",
+      "oid": "4f3640dca9886dedd91388f9f8dcb56e0d007e78"
+    },
+    "src/services/historyMigration.faults.test.js": {
+      "mode": "100644",
+      "oid": "0f64f32977040802b70abc740fbb787fca80688b"
+    },
+    "src/services/historyMigration.js": {
+      "mode": "100644",
+      "oid": "dbb5628b52668d8637cf4b49204586d036e319ac"
+    },
+    "src/services/historyMigration.test.js": {
+      "mode": "100644",
+      "oid": "3a8569adafe6eef659f8152723ebf36004a77730"
+    },
+    "src/services/historyReader.js": {
+      "mode": "100644",
+      "oid": "4bace9aab7eaee21d8697d4629f0cf9a8260664e"
+    },
+    "src/services/historyReader.test.js": {
+      "mode": "100644",
+      "oid": "5fed70a4066bc90f4c707349d5538ab5d3781fc9"
+    },
+    "src/services/historyRepository.js": {
+      "mode": "100644",
+      "oid": "5cef9dac1d9eac27059f473b7ca570348aa2e6c2"
+    },
+    "src/services/historyRepository.test.js": {
+      "mode": "100644",
+      "oid": "84afcef6239e7291d70e74310df76eff3d0570f3"
+    },
+    "src/services/historySerialization.js": {
+      "mode": "100644",
+      "oid": "b24d420cd9d3c3675c4da11ea00806a553ba2481"
+    },
+    "src/services/historyStatus.js": {
+      "mode": "100644",
+      "oid": "033d4c5da95188b321144c06fc5213f9aa197783"
+    },
+    "src/services/lmStudioNative.js": {
+      "mode": "100644",
+      "oid": "adb50a6f226e54c246463d5fc60b77cabb4b2e57"
+    },
+    "src/services/lmStudioNative.test.js": {
+      "mode": "100644",
+      "oid": "5fa1a4bfb6976cfef16a3c13ce52e545347ec4b1"
+    },
+    "src/services/manualToolAdapter.js": {
+      "mode": "100644",
+      "oid": "d099bb773ddc852c74b780b48b6bb8dd1ee77c49"
+    },
+    "src/services/modelCatalog.js": {
+      "mode": "100644",
+      "oid": "fabf5d3c1fb9f6b1bd8c1e32bad3e648b02e7343"
+    },
+    "src/services/modelCatalog.test.js": {
+      "mode": "100644",
+      "oid": "304c7cf153337a5f27a01da1fd3804acc24aa796"
+    },
+    "src/services/modelFilters.js": {
+      "mode": "100644",
+      "oid": "c0a76a8d5f377373b76c2c0d9574a51006812c5a"
+    },
+    "src/services/modelFilters.test.js": {
+      "mode": "100644",
+      "oid": "f107fc34895e1ac88436983525c9720a9734acf2"
+    },
+    "src/services/modelService.js": {
+      "mode": "100644",
+      "oid": "d24902d3abb0f447593721d88f0bfa27f940a190"
+    },
+    "src/services/modelService.test.js": {
+      "mode": "100644",
+      "oid": "e37ebebcf11f47e436ef19e23c59675951aec387"
+    },
+    "src/services/openrouterPayload.js": {
+      "mode": "100644",
+      "oid": "76eb0cbabb430c320c706d5dafee63559f487320"
+    },
+    "src/services/openrouterPayload.test.js": {
+      "mode": "100644",
+      "oid": "684dcaf422dcf1decbc20c2c9c3387e84ec95653"
+    },
+    "src/services/priceCatalog.js": {
+      "mode": "100644",
+      "oid": "f0243b5874df6623676349c013f33cba460877fd"
+    },
+    "src/services/priceCatalog.test.js": {
+      "mode": "100644",
+      "oid": "f473f488c2ce219dee503193c207d1bdb1de7757"
+    },
+    "src/services/searchIntent.js": {
+      "mode": "100644",
+      "oid": "f941e53574d2860af43a8db3a3b63aaa50be7593"
+    },
+    "src/services/usage.js": {
+      "mode": "100644",
+      "oid": "6cf8c2473d8a074c98d699d678728b02e4626213"
+    },
+    "src/services/usage.test.js": {
+      "mode": "100644",
+      "oid": "e5a1ac219057890baeafa40fcbb8350b4a3dffc5"
+    },
+    "src/services/webSearchService.js": {
+      "mode": "100644",
+      "oid": "831ece8bc585c7209d7bde7b0d439e2c2f43f8ed"
+    },
+    "src/services/webSearchService.test.js": {
+      "mode": "100644",
+      "oid": "62d9a89ef9daf2f3efa91799744cee60a9a5d26c"
+    },
+    "src/sidepanel/App.history.test.jsx": {
+      "mode": "100644",
+      "oid": "bce22edd748c514002b58c62086ce44cfbd29d5e"
+    },
+    "src/sidepanel/App.jsx": {
+      "mode": "100644",
+      "oid": "ffe52da01032298fac4839620b060c81b1f838e0"
+    },
+    "src/sidepanel/App.test.jsx": {
+      "mode": "100644",
+      "oid": "f1052c2147843d39a376622e1a86da8d7057f63e"
+    },
+    "src/sidepanel/App_WebSearch.test.jsx": {
+      "mode": "100644",
+      "oid": "713669c86a715b8528178b9c85c46fc3985658a4"
+    },
+    "src/sidepanel/PluginRefinements.test.jsx": {
+      "mode": "100644",
+      "oid": "cf077d3a8310236a412fd200f9c9da215e7a815a"
+    },
+    "src/sidepanel/index.html": {
+      "mode": "100644",
+      "oid": "c40ad9791c3e16ff59b9f406b83d72cb7ddd467e"
+    },
+    "src/sidepanel/index.jsx": {
+      "mode": "100644",
+      "oid": "aae19b4c4bf9887a2249ae392c98a9ad527614a9"
+    },
+    "src/store/apiKeys.js": {
+      "mode": "100644",
+      "oid": "67eab2cccc39237e7b4949b011d22df82f55f385"
+    },
+    "src/store/apiKeys.test.js": {
+      "mode": "100644",
+      "oid": "b13b71c1a29c7f471b0a0eb0619f6689357e5d9d"
+    },
+    "src/store/chromeStorageAdapter.js": {
+      "mode": "100644",
+      "oid": "0280d4ba2fc4fcdbd45c40e247b5c53684959f37"
+    },
+    "src/store/chromeStorageAdapter.test.js": {
+      "mode": "100644",
+      "oid": "0d9ebf06a55f9d84f644401750f381bdb24c1a1d"
+    },
+    "src/store/historySync.js": {
+      "mode": "100644",
+      "oid": "98d47725f924967363aa6bc281448b8d09d11306"
+    },
+    "src/store/historySync.test.js": {
+      "mode": "100644",
+      "oid": "31732d5878cdb81ff0b9af39c97e5832902950c6"
+    },
+    "src/store/useChatStore.history.test.js": {
+      "mode": "100644",
+      "oid": "862011f5de9549153e8c07f616736ca5bc007bd8"
+    },
+    "src/store/useChatStore.js": {
+      "mode": "100644",
+      "oid": "2e9a81622b004969d996c50cd014a0fb9d5f702b"
+    },
+    "src/store/useChatStore.sort.test.js": {
+      "mode": "100644",
+      "oid": "b5a9ff35a8e6293e622b7127c96428c294c9fe42"
+    },
+    "src/store/useChatStore.test.js": {
+      "mode": "100644",
+      "oid": "90015cf29c64ea40dcf7f685671d3003eae88a99"
+    },
+    "src/store/useDraftStore.js": {
+      "mode": "100644",
+      "oid": "b8cdca8511fb6838227131ed80327aac2e9d0fea"
+    },
+    "src/store/useDraftStore.test.js": {
+      "mode": "100644",
+      "oid": "b508774b4d4ba39acab438b0d5745cca2ed9bf8b"
+    },
+    "src/store/usePromptsStore.js": {
+      "mode": "100644",
+      "oid": "3ed3413aa2eb87a1af528befd8805e7ec00dd5b9"
+    },
+    "src/store/usePromptsStore.test.js": {
+      "mode": "100644",
+      "oid": "688c1144094444f63cd95eaf23e0ff26539c9378"
+    },
+    "src/test/chat_input.test.jsx": {
+      "mode": "100644",
+      "oid": "7f14a76199ad90e83c6312bbb57d3ec4995d831d"
+    },
+    "src/test/dependency_integrity.test.jsx": {
+      "mode": "100644",
+      "oid": "310337e460dfa184839baea917199b30a7fec35a"
+    },
+    "src/test/drag_and_drop.test.jsx": {
+      "mode": "100644",
+      "oid": "fb1b346b74b714ecc6ae7c015af34275c89f7880"
+    },
+    "src/test/integration_openrouter.test.jsx": {
+      "mode": "100644",
+      "oid": "c6c65dd4d382ac707261b78c87eccf4fa7c40a09"
+    },
+    "src/test/integration_verified_features.test.jsx": {
+      "mode": "100644",
+      "oid": "1c42d98f4d9a9aff6295c0cebfb869b779f20177"
+    },
+    "src/test/manual_tool_adapter.test.jsx": {
+      "mode": "100644",
+      "oid": "c2ad1b4f43784ed90122d1352de14e94788c83f3"
+    },
+    "src/test/model_sorting.test.jsx": {
+      "mode": "100644",
+      "oid": "9dfd454a5c738c07254ef2c40b61337c96d8e9fb"
+    },
+    "src/test/parallel_conversations.test.jsx": {
+      "mode": "100644",
+      "oid": "746bd9997e93c0021b8b4e3a2118e94097906d8e"
+    },
+    "src/test/performance.test.jsx": {
+      "mode": "100644",
+      "oid": "ba68c585f73f278ffc3358bcf41bd9b9e8393f6a"
+    },
+    "src/test/search_api_integration.test.jsx": {
+      "mode": "100644",
+      "oid": "7453a5d98e7709cbdc3f35f42d68e8b185388613"
+    },
+    "src/test/setupTests.js": {
+      "mode": "100644",
+      "oid": "7bed7c450e1c135e5fe962fef11267daa6ad8964"
+    },
+    "src/test/web_search.test.jsx": {
+      "mode": "100644",
+      "oid": "1572816ae534f5029c9d87f9a66beac2a7bd6848"
+    },
+    "src/test/web_search_integration.test.jsx": {
+      "mode": "100644",
+      "oid": "2b92ec3959af55fa4f1dbf19174571a5d13b4be6"
+    },
+    "src/test/web_search_local.test.jsx": {
+      "mode": "100644",
+      "oid": "2c7102b3c65b18aeccb7d275f6d394f8d3a95d5c"
+    },
+    "src/theme/colors.js": {
+      "mode": "100644",
+      "oid": "49708f27800d991928a96b98d6e5a49c30a7c2c2"
+    },
+    "src/utils/costColors.js": {
+      "mode": "100644",
+      "oid": "5d16aac9b626c09f3cedca7eda73d7b0a2ad2e6f"
+    },
+    "src/utils/costColors.test.js": {
+      "mode": "100644",
+      "oid": "3b287afa6b46979c66dd349d05c7330944c2f94e"
+    },
+    "src/utils/encryption.js": {
+      "mode": "100644",
+      "oid": "de9bb647d668db9f233b2cbb445521bb7f291132"
+    },
+    "src/utils/encryption.test.js": {
+      "mode": "100644",
+      "oid": "fd791c9f927effac484d286b052ea6267cfc2862"
+    },
+    "src/utils/fileProcessor.js": {
+      "mode": "100644",
+      "oid": "d56e3d4678cf19dac67a641be9a3b97072542b7c"
+    },
+    "src/utils/fileProcessor.test.js": {
+      "mode": "100644",
+      "oid": "aa6a4f0203e2f599be514625a692d238e5f61964"
+    },
+    "src/utils/pageScraper.js": {
+      "mode": "100644",
+      "oid": "284e85d3073fdb9af908c8adf896d89a6f10f53c"
+    },
+    "src/utils/pageScraper.test.js": {
+      "mode": "100644",
+      "oid": "49464a7a588d3c827dc5b41ebe497d8ae9a6d571"
+    },
+    "tailwind.config.js": {
+      "mode": "100644",
+      "oid": "782aac01630ac7fa307daff9f488a5b8df6f2695"
+    },
+    "vite.config.js": {
+      "mode": "100644",
+      "oid": "b8c2d34409cb39d8229e83e5be58bd3edd134d7d"
+    },
+    "vitest.config.js": {
+      "mode": "100644",
+      "oid": "5f299d1b937e673a13924b2c4d3e6a70e179c8c6"
+    }
+  }
+}

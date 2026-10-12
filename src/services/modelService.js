@@ -6,7 +6,7 @@ import { normalizeAnthropic, normalizeGoogle, normalizeOpenAI, normalizeOpenRout
 import { loadPriceCatalog, enrichFromCatalog } from './priceCatalog';
 
 // In-memory cache for model lists to avoid repeated API calls
-// Cache is keyed by: provider | baseUrl | api key fingerprint | free-models flag, to detect config changes
+// Cache is keyed by: provider | baseUrl | api key fingerprint, to detect config changes
 const modelCache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -23,8 +23,8 @@ const fingerprint = (s) => {
 /**
  * Create a cache key from provider configuration
  */
-const getCacheKey = (provider, baseUrl, apiKey, includeFreeModels) =>
-    `${provider}|${baseUrl || 'default'}|${apiKey ? fingerprint(apiKey) : 'nokey'}|free-${!!includeFreeModels}`;
+const getCacheKey = (provider, baseUrl, apiKey) =>
+    `${provider}|${baseUrl || 'default'}|${apiKey ? fingerprint(apiKey) : 'nokey'}`;
 
 /**
  * Check if cached models are still valid
@@ -73,12 +73,15 @@ const withCatalog = async (provider, models) => {
     return enrichFromCatalog(models, provider, catalog);
 };
 
-export const fetchModels = async (customBaseUrl, includeFreeModels = false, provider = 'openrouter', apiKey = '') => {
+export const fetchModels = async (customBaseUrl, provider = 'openrouter', apiKey = '') => {
     try {
         const cleanProvider = (provider || 'openrouter').toLowerCase().trim();
 
+        // OpenRouter lists only the models the key may use; without a key there is no authorized list.
+        if (cleanProvider === 'openrouter' && !apiKey) return [];
+
         // Check cache first
-        const cacheKey = getCacheKey(cleanProvider, customBaseUrl, apiKey, includeFreeModels);
+        const cacheKey = getCacheKey(cleanProvider, customBaseUrl, apiKey);
         const cachedModels = getCachedModels(cacheKey);
         if (cachedModels) {
             console.log(`[ModelService] Using cached models for ${cleanProvider}`);
@@ -153,20 +156,21 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
 
 
         // --- OpenRouter / Local (Ollama/LM Studio) ---
-        // Explicitly check for 'openrouter' or 'local'. If unknown, default to openrouter logic but logs might be useful.
+        // OpenRouter requests the key's authorized list at `models/user`; every other non-local
+        // provider uses `models`. An empty customBaseUrl falls back to the provider's default host.
         const isLocal = cleanProvider === 'local';
 
-        // If the provider is unknown and not 'local', we treat it as OpenRouter (compatibility),
-        // but we should proceed with caution.
-
-        const baseUrl = customBaseUrl ? customBaseUrl.replace(/\/$/, '') : 'https://openrouter.ai/api/v1';
+        const baseUrl = customBaseUrl ? customBaseUrl.replace(/\/$/, '')
+            : isLocal ? 'http://localhost:11434/v1' : 'https://openrouter.ai/api/v1';
 
         const headers = {};
         if (apiKey) {
             headers['Authorization'] = `Bearer ${apiKey}`;
         }
 
-        const response = await fetch(`${baseUrl}/models`, {
+        // No fallback to the public /models list when the personalized list fails.
+        const path = cleanProvider === 'openrouter' ? 'models/user' : 'models';
+        const response = await fetch(`${baseUrl}/${path}`, {
             headers: headers
         });
 
@@ -182,26 +186,16 @@ export const fetchModels = async (customBaseUrl, includeFreeModels = false, prov
         try {
             data = JSON.parse(text);
         } catch (e) {
-            throw new Error(`Failed to parse model list: ${text.slice(0, 100)}...`);
+            throw new Error('Failed to parse model list');
         }
-        models = data.data || [];
+        if (!data || !Array.isArray(data.data)) throw new Error('Malformed model list response');
+        models = data.data;
 
-        // If local, we tag them and skip the "free" filter because local models
-        // don't have the same "free" semantics (they are free but private).
+        // If local, we tag them as Local.
         if (isLocal) {
             const result = models.map(m => ({ ...m, _category: 'Local' }));
             setCachedModels(cacheKey, result);
             return result;
-        }
-
-        // Filter free models if not included (Only for OpenRouter)
-        if (!includeFreeModels && cleanProvider === 'openrouter') {
-            models = models.filter(model => {
-                const isFree = model.pricing &&
-                    (String(model.pricing.prompt) === "0") &&
-                    (String(model.pricing.completion) === "0");
-                return !isFree;
-            });
         }
 
         const result = normalizeOpenRouter(models);

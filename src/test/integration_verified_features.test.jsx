@@ -36,13 +36,14 @@ describe('Verified Features Integration', () => {
 
         // Reset store state
         act(() => {
+            // OpenRouter loads its catalogue only with a key.
             useChatStore.setState({
                 availableModels: [],
                 model: 'anthropic/claude-4-sonnet',
                 providerMode: 'cloud',
-                apiKeys: emptyKeys(),
-                activeKeyId: emptyActive(),
-                includeFreeModels: false
+                activeCloudProvider: 'openrouter',
+                apiKeys: { ...emptyKeys(), openrouter: [{ id: 'k1', label: 'Default', encryptedKey: 'encrypted-test-key', baseUrl: '' }] },
+                activeKeyId: { ...emptyActive(), openrouter: 'k1' }
             });
         });
 

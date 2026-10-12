@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     normalizeOpenAI, normalizeAnthropic, normalizeGoogle, normalizeOpenRouter,
-    getModelCategory, supportsImageInput
+    getModelCategory, supportsImageInput, parseModelPrice, isFreePricing
 } from './modelCatalog';
 import openaiFixture from './__fixtures__/openai-models.json';
 import anthropicFixture from './__fixtures__/anthropic-models.json';
@@ -103,5 +103,35 @@ describe('supportsImageInput', () => {
     it("prefers the provider's own answer over catalog modalities", () => {
         expect(supportsImageInput({ supportsImages: false, architecture: { input_modalities: ['text', 'image'] } })).toBe(false);
         expect(supportsImageInput({ supportsImages: null, architecture: { input_modalities: ['text', 'image'] } })).toBe(true);
+    });
+});
+
+describe('parseModelPrice', () => {
+    it.each([
+        ['0', 0], [0, 0], [' 0 ', 0], ['0.000001', 0.000001], [1.5, 1.5],
+        [null, null], [undefined, null], ['', null], ['   ', null],
+        [true, null], [false, null], ['-1', null], [-1, null],
+        [Infinity, null], ['Infinity', null], [NaN, null], ['abc', null], [{}, null], [[], null],
+    ])('%j parses to %s', (value, expected) => {
+        expect(parseModelPrice(value)).toBe(expected);
+    });
+});
+
+describe('isFreePricing', () => {
+    it.each([
+        [{ prompt: '0', completion: '0' }, true],
+        [{ prompt: 0, completion: '0' }, true],
+        [{ prompt: null, completion: 0 }, false],
+        [{ prompt: 0 }, false],
+        [{ prompt: '', completion: '' }, false],
+        [{ prompt: false, completion: false }, false],
+        [{ prompt: '-1', completion: '-1' }, false],
+        [{ prompt: '0', completion: '0.000001' }, false],
+        [undefined, false],
+    ])('%j -> %s', (pricing, expected) => {
+        expect(isFreePricing(pricing)).toBe(expected);
+    });
+    it('does not classify models with missing prices as Free', () => {
+        expect(getModelCategory({ id: 'x/unknown', pricing: { prompt: null, completion: null } })).not.toBe('Free');
     });
 });

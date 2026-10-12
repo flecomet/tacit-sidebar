@@ -357,6 +357,15 @@ export default function MessageList({ messages, isLoading, isImageModel = false,
                                             )}
                                         </div>
                                     )}
+                                    {m.role === 'assistant' && m.metadata?.toolCalls?.length > 0 && (
+                                        <div className="mt-1.5 text-[10px] text-gray-500 font-mono opacity-80">
+                                            {m.metadata.toolCalls.map((tc, idx) => (
+                                                <div key={idx} className="truncate">
+                                                    Searched via LM Studio MCP: {tc.tool}{tc.query ? ` ${tc.query}` : ''}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>

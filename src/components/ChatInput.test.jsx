@@ -564,6 +564,52 @@ describe('ChatInput Component', () => {
         });
     });
 
+    describe('catalogue state', () => {
+        const renderInput = (props) => render(
+            <ChatInput onSend={vi.fn()} onUpload={vi.fn()} onReadPage={vi.fn()} providerMode="cloud" {...props} />);
+        const sendDisabled = () => screen.getByRole('button', { name: 'Send' }).disabled;
+
+        beforeEach(() => {
+            useDraftStore.mockReturnValue({ draft: 'Hello', setDraft: vi.fn() });
+        });
+
+        it.each([
+            ['loading', 'anthropic/claude-4-sonnet', true],
+            ['error', '', true],
+            ['ready', '', true],
+            ['ready', 'anthropic/claude-4-sonnet', false],
+            // Send stays clickable without a key: App then opens Settings instead of sending.
+            ['missing-key', '', false],
+        ])('OpenRouter catalogue %s with selection "%s" disables Send: %s', (catalogStatus, model, disabled) => {
+            useChatStore.mockReturnValue({
+                model, setModel: vi.fn(), favorites: [], toggleFavorite: vi.fn(),
+                availableModels: [{ id: 'anthropic/claude-4-sonnet', name: 'Claude 4 Sonnet' }],
+            });
+            renderInput({ activeProvider: 'openrouter', catalogStatus });
+            expect(sendDisabled()).toBe(disabled);
+        });
+
+        it.each([['local', 'local'], ['cloud', 'anthropic']])('keeps Send available in %s mode while %s discovery runs', (providerMode, activeProvider) => {
+            useChatStore.mockReturnValue({ model: '', setModel: vi.fn(), favorites: [], toggleFavorite: vi.fn(), availableModels: [] });
+            renderInput({ providerMode, activeProvider, catalogStatus: 'loading' });
+            expect(sendDisabled()).toBe(false);
+        });
+
+        it('forwards the catalogue state and actions to the model picker', () => {
+            useChatStore.mockReturnValue({ model: '', setModel: vi.fn(), favorites: [], toggleFavorite: vi.fn(), availableModels: [] });
+            const onRefreshModels = vi.fn();
+            const onOpenSettings = vi.fn();
+            renderInput({ activeProvider: 'openrouter', catalogStatus: 'error', catalogError: 'Malformed model list response', onRefreshModels, onOpenSettings });
+            fireEvent.focus(screen.getByRole('combobox'));
+            expect(screen.getByText('Could not load models allowed by your OpenRouter settings.')).toBeDefined();
+            expect(screen.getByText('Malformed model list response')).toBeDefined();
+            fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Open settings' }));
+            expect(onRefreshModels).toHaveBeenCalledTimes(1);
+            expect(onOpenSettings).toHaveBeenCalledTimes(1);
+        });
+    });
+
     // Stop Button Tests
     describe('Stop Button', () => {
         beforeEach(() => {

@@ -1,4 +1,5 @@
 // Background Service Worker
+import { createHistoryService } from './historyService';
 
 // Validates side panel opening on action click (Chrome 116+)
 if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
@@ -7,10 +8,8 @@ if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
         .catch((error) => console.error(error));
 }
 
-// Handle messages from Side Panel
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // No handlers currently active
-});
+// Owns every history write and the resumable encryption migration.
+createHistoryService().register();
 
 // Export for testing
 export const LOCAL_RULE_ID = 1;

@@ -51,7 +51,9 @@ describe('Web Search Integration', () => {
 
             const callArgs = global.fetch.mock.calls[0];
             const body = JSON.parse(callArgs[1].body);
-            expect(body.plugins).toEqual([{ id: 'web' }]);
+            expect(body.plugins).toEqual([{ id: 'web', max_results: 3 }]);
+            // No catalog limit passed, so max_tokens falls back to the 32768 cap
+            expect(body.max_tokens).toBe(32768);
         });
 
         it('should include web_search tool for OpenAI when webSearch is true', async () => {
