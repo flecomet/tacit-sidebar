@@ -1,10 +1,727 @@
 {
  "data": [
   {
+   "id": "moonshotai/kimi-k3.1-pro",
+   "name": "MoonshotAI: Kimi K3.1 Pro",
+   "created": 1792778188,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.000002",
+    "completion": "0.00001",
+    "input_cache_read": "0.0000002"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 943718,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "recursive/flint-v1.0:free",
+   "name": "Recursive: Flint (free)",
+   "created": 1792622765,
+   "context_length": 262144,
+   "architecture": {
+    "modality": "text->text",
+    "input_modalities": [
+     "text"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0",
+    "completion": "0"
+   },
+   "top_provider": {
+    "context_length": 262144,
+    "max_completion_tokens": 235929,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "minimax/minimax-m3.1-flash",
+   "name": "MiniMax: MiniMax M3.1 Flash",
+   "created": 1792379569,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000015",
+    "completion": "0.0000006",
+    "input_cache_read": "0.000000015"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 524288,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "deepseek/deepseek-v4.1-flash-1017",
+   "name": "DeepSeek: DeepSeek V4.1 Flash 1017",
+   "created": 1792225624,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "DeepSeek",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000015",
+    "completion": "0.0000006",
+    "input_cache_read": "0.000000003",
+    "overrides": [
+     {
+      "utc_days": [
+       "saturday",
+       "sunday"
+      ],
+      "prompt": "0.00000015",
+      "completion": "0.0000006",
+      "input_cache_read": "0.000000003"
+     },
+     {
+      "utc_days": [
+       "monday",
+       "tuesday",
+       "wednesday",
+       "thursday",
+       "friday"
+      ],
+      "utc_start": 0,
+      "utc_end": 100,
+      "prompt": "0.00000015",
+      "completion": "0.0000006",
+      "input_cache_read": "0.000000003"
+     },
+     {
+      "utc_days": [
+       "monday",
+       "tuesday",
+       "wednesday",
+       "thursday",
+       "friday"
+      ],
+      "utc_start": 100,
+      "utc_end": 400,
+      "prompt": "0.0000003",
+      "completion": "0.0000012",
+      "input_cache_read": "0.000000006"
+     },
+     {
+      "utc_days": [
+       "monday",
+       "tuesday",
+       "wednesday",
+       "thursday",
+       "friday"
+      ],
+      "utc_start": 400,
+      "utc_end": 600,
+      "prompt": "0.00000015",
+      "completion": "0.0000006",
+      "input_cache_read": "0.000000003"
+     },
+     {
+      "utc_days": [
+       "monday",
+       "tuesday",
+       "wednesday",
+       "thursday",
+       "friday"
+      ],
+      "utc_start": 600,
+      "utc_end": 1000,
+      "prompt": "0.0000003",
+      "completion": "0.0000012",
+      "input_cache_read": "0.000000006"
+     },
+     {
+      "utc_days": [
+       "monday",
+       "tuesday",
+       "wednesday",
+       "thursday",
+       "friday"
+      ],
+      "utc_start": 1000,
+      "utc_end": 0,
+      "prompt": "0.00000015",
+      "completion": "0.0000006",
+      "input_cache_read": "0.000000003"
+     }
+    ]
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 393216,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "elorian/glimpse",
+   "name": "Elorian: Glimpse",
+   "created": 1792206629,
+   "context_length": 262144,
+   "architecture": {
+    "modality": "text+image+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000006",
+    "completion": "0.000003",
+    "input_cache_read": "0.00000006"
+   },
+   "top_provider": {
+    "context_length": 262144,
+    "max_completion_tokens": 256000,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "xingchen-agi/xing4.0-29b-a4b:free",
+   "name": "XingChen: Xing4.0 29B A4B (free)",
+   "created": 1792177496,
+   "context_length": 262144,
+   "architecture": {
+    "modality": "text->text",
+    "input_modalities": [
+     "text"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0",
+    "completion": "0"
+   },
+   "top_provider": {
+    "context_length": 262144,
+    "max_completion_tokens": 235929,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "reflection/beam-1.0-501b-a23b",
+   "name": "Reflection: Beam 1.0 501B A23B",
+   "created": 1792160499,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text->text",
+    "input_modalities": [
+     "text"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000025",
+    "completion": "0.000001",
+    "input_cache_read": "0.00000005"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "inception/mercury-3",
+   "name": "Inception: Mercury 3",
+   "created": 1792158337,
+   "context_length": 1000000,
+   "architecture": {
+    "modality": "text->text",
+    "input_modalities": [
+     "text"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000001",
+    "completion": "0.00000035",
+    "input_cache_read": "0.00000001"
+   },
+   "top_provider": {
+    "context_length": 1000000,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "moondream/moondream3-preview",
+   "name": "Moondream: Moondream 3 Preview",
+   "created": 1792102385,
+   "context_length": 32000,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000003",
+    "completion": "0.0000025"
+   },
+   "top_provider": {
+    "context_length": 32000,
+    "max_completion_tokens": 4096,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "moondream/moondream3.1-9b-a2b",
+   "name": "Moondream: Moondream 3.1",
+   "created": 1792102373,
+   "context_length": 32000,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000003",
+    "completion": "0.0000025"
+   },
+   "top_provider": {
+    "context_length": 32000,
+    "max_completion_tokens": 4096,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "meta/muse-spark-open",
+   "name": "Meta: Muse Spark Open",
+   "created": 1792087069,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+file+audio+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video",
+     "file",
+     "audio"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000125",
+    "completion": "0.00000425",
+    "input_cache_read": "0.00000015"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 943718,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "nvidia/nemotron-3.5-super-vl",
+   "name": "NVIDIA: Nemotron 3.5 Super VL",
+   "created": 1792076662,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000015",
+    "completion": "0.0000005",
+    "input_cache_read": "0.00000002"
+   },
+   "top_provider": {
+    "context_length": 262144,
+    "max_completion_tokens": 235929,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "nvidia/nemotron-3.5-super-vl:free",
+   "name": "NVIDIA: Nemotron 3.5 Super VL (free)",
+   "created": 1792076662,
+   "context_length": 1000000,
+   "architecture": {
+    "modality": "text+image+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0",
+    "completion": "0"
+   },
+   "top_provider": {
+    "context_length": 1000000,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "unbiased/pareto-26.10",
+   "name": "Pareto 26.10",
+   "created": 1792073620,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000008",
+    "completion": "0.0000032",
+    "input_cache_read": "0.00000003"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "~unbiased/pareto-latest",
+   "name": "Pareto Latest",
+   "created": 1791933050,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Router",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000008",
+    "completion": "0.0000032",
+    "input_cache_read": "0.00000003"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "unbiased/pareto-26.9",
+   "name": "Pareto 26.9",
+   "created": 1791930537,
+   "context_length": 262144,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.0000025",
+    "completion": "0.0000075",
+    "input_cache_read": "0.00000025"
+   },
+   "top_provider": {
+    "context_length": 262144,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "liquid/lfm-2.5-24b-a2b",
+   "name": "LiquidAI: LFM2.5-24B-A2B",
+   "created": 1791912025,
+   "context_length": 128000,
+   "architecture": {
+    "modality": "text->text",
+    "input_modalities": [
+     "text"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000005",
+    "completion": "0.0000007",
+    "input_cache_read": "0.000000025"
+   },
+   "top_provider": {
+    "context_length": 128000,
+    "max_completion_tokens": 8192,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "google/gemini-4-argon",
+   "name": "Google: Gemini 4 Argon",
+   "created": 1791907477,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+file+audio+video->text",
+    "input_modalities": [
+     "audio",
+     "file",
+     "image",
+     "text",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Gemini",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.000002",
+    "completion": "0.00001",
+    "image": "0.000002",
+    "audio": "0.000002",
+    "input_audio_cache": "0.0000001",
+    "web_search": "0.014",
+    "internal_reasoning": "0.00001",
+    "input_cache_read": "0.0000001",
+    "input_cache_write": "0.0000001875"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 943718,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "google/gemini-4-argon:batch",
+   "name": "Google: Gemini 4 Argon (batch)",
+   "created": 1791907477,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+file+audio+video->text",
+    "input_modalities": [
+     "audio",
+     "file",
+     "image",
+     "text",
+     "video"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Gemini",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.000001",
+    "completion": "0.000005",
+    "image": "0.000001",
+    "audio": "0.000001",
+    "input_audio_cache": "0.00000005",
+    "web_search": "0.014",
+    "internal_reasoning": "0.000005",
+    "input_cache_read": "0.00000005",
+    "input_cache_write": "0.0000001875"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 943718,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "scaledown/summarize",
+   "name": "ScaleDown: Summarize",
+   "created": 1791893360,
+   "context_length": 1000000,
+   "architecture": {
+    "modality": "text+image+file->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "file"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000004",
+    "completion": "0"
+   },
+   "top_provider": {
+    "context_length": 1000000,
+    "max_completion_tokens": 4000,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "scaledown/extract",
+   "name": "ScaleDown: Extract",
+   "created": 1791893351,
+   "context_length": 1000000,
+   "architecture": {
+    "modality": "text+image+file->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "file"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000004",
+    "completion": "0"
+   },
+   "top_provider": {
+    "context_length": 1000000,
+    "max_completion_tokens": 900000,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "meta/muse-wonder",
+   "name": "Meta: Muse Wonder",
+   "created": 1791807945,
+   "context_length": 1048576,
+   "architecture": {
+    "modality": "text+image+file+audio+video->text",
+    "input_modalities": [
+     "text",
+     "image",
+     "video",
+     "file",
+     "audio"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Other",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.000004",
+    "completion": "0.00002",
+    "web_search": "0.0025",
+    "input_cache_read": "0.0000002"
+   },
+   "top_provider": {
+    "context_length": 1048576,
+    "max_completion_tokens": 943718,
+    "is_moderated": true
+   }
+  },
+  {
    "id": "stepfun/step-5-preview",
    "name": "StepFun: Step 5 Preview",
    "created": 1791462849,
-   "context_length": 1000000,
+   "context_length": 1048576,
    "architecture": {
     "modality": "text+image+video->text",
     "input_modalities": [
@@ -21,7 +738,7 @@
    "pricing": {
     "prompt": "0.000001",
     "completion": "0.0000027",
-    "input_cache_read": "0.00000005"
+    "input_cache_read": "0.0000001"
    },
    "top_provider": {
     "context_length": 1000000,
@@ -161,9 +878,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000068",
-    "completion": "0.00000209",
-    "input_cache_read": "0.00000007"
+    "prompt": "0.00000136",
+    "completion": "0.00000418",
+    "input_cache_read": "0.00000014"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -188,66 +905,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0",
-    "completion": "0"
-   },
-   "top_provider": {
-    "context_length": 262144,
-    "max_completion_tokens": 32768,
-    "is_moderated": false
-   }
-  },
-  {
-   "id": "apodex/apodex-1.1-mini:free",
-   "name": "Apodex: Apodex 1.1 Mini (free)",
-   "created": 1790875335,
-   "context_length": 262144,
-   "architecture": {
-    "modality": "text->text",
-    "input_modalities": [
-     "text"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Other",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0",
-    "completion": "0"
+    "prompt": "0.000000075",
+    "completion": "0.000000225",
+    "input_cache_read": "0.000000015"
    },
    "top_provider": {
     "context_length": 262144,
     "max_completion_tokens": 235929,
-    "is_moderated": false
-   }
-  },
-  {
-   "id": "unbiased/pareto-26.10-preview",
-   "name": "Pareto 26.10 Preview",
-   "created": 1790863623,
-   "context_length": 1048576,
-   "architecture": {
-    "modality": "text+image->text",
-    "input_modalities": [
-     "text",
-     "image"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Other",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.0000008",
-    "completion": "0.0000032",
-    "input_cache_read": "0.00000003"
-   },
-   "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -440,7 +1104,7 @@
    "top_provider": {
     "context_length": 1000000,
     "max_completion_tokens": 128000,
-    "is_moderated": true
+    "is_moderated": false
    }
   },
   {
@@ -501,7 +1165,7 @@
    },
    "top_provider": {
     "context_length": null,
-    "max_completion_tokens": null,
+    "max_completion_tokens": 65536,
     "is_moderated": false
    }
   },
@@ -1353,34 +2017,6 @@
    }
   },
   {
-   "id": "unbiased/pareto",
-   "name": "Pareto",
-   "created": 1789686178,
-   "context_length": 262144,
-   "architecture": {
-    "modality": "text+image->text",
-    "input_modalities": [
-     "text",
-     "image"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Other",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.0000025",
-    "completion": "0.0000075",
-    "input_cache_read": "0.00000025"
-   },
-   "top_provider": {
-    "context_length": 262144,
-    "max_completion_tokens": 131072,
-    "is_moderated": false
-   }
-  },
-  {
    "id": "~deepseek/deepseek-pro-latest",
    "name": "DeepSeek: DeepSeek Pro Latest",
    "created": 1789399174,
@@ -1397,9 +2033,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000021912",
-    "completion": "0.00000065736",
-    "input_cache_read": "0.000000006972"
+    "prompt": "0.0000001188",
+    "completion": "0.000008",
+    "input_cache_read": "0.00000012"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -1425,9 +2061,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000000001",
-    "completion": "0.0000006",
-    "input_cache_read": "0.000000005"
+    "prompt": "0.00000002",
+    "completion": "0.000001",
+    "input_cache_read": "0.000000015"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -1721,7 +2357,7 @@
    "id": "inclusionai/ling-3.0-flash-vl",
    "name": "inclusionAI: Ling 3.0 Flash VL",
    "created": 1789056114,
-   "context_length": 262144,
+   "context_length": 131072,
    "architecture": {
     "modality": "text+image+video->text",
     "input_modalities": [
@@ -1736,12 +2372,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000021",
-    "completion": "0.0000000616",
-    "input_cache_read": "0.0000000042"
+    "prompt": "0.00000006",
+    "completion": "0.00000018",
+    "input_cache_read": "0.000000012"
    },
    "top_provider": {
-    "context_length": 262144,
+    "context_length": 131072,
     "max_completion_tokens": 32768,
     "is_moderated": false
    }
@@ -1764,9 +2400,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000003",
-    "completion": "0.0000012",
-    "input_cache_read": "0.000000006"
+    "prompt": "0.00000002",
+    "completion": "0.000001",
+    "input_cache_read": "0.000000015"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -1792,13 +2428,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000112",
-    "completion": "0.000000336",
-    "input_cache_read": "0.00000000336"
+    "prompt": "0.00000005",
+    "completion": "0.00000015",
+    "input_cache_read": "0.000000004"
    },
    "top_provider": {
     "context_length": 1048576,
-    "max_completion_tokens": 131072,
+    "max_completion_tokens": 384000,
     "is_moderated": false
    }
   },
@@ -2002,7 +2638,7 @@
    "top_provider": {
     "context_length": 1050000,
     "max_completion_tokens": 128000,
-    "is_moderated": true
+    "is_moderated": false
    }
   },
   {
@@ -2043,33 +2679,6 @@
     "context_length": 1050000,
     "max_completion_tokens": 128000,
     "is_moderated": true
-   }
-  },
-  {
-   "id": "inclusionai/ling-3.0-flash-sante",
-   "name": "inclusionAI: Ling 3.0 Flash Sante",
-   "created": 1788545946,
-   "context_length": 262144,
-   "architecture": {
-    "modality": "text->text",
-    "input_modalities": [
-     "text"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Other",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.000000042",
-    "completion": "0.0000001232",
-    "input_cache_read": "0.0000000084"
-   },
-   "top_provider": {
-    "context_length": 262144,
-    "max_completion_tokens": 32768,
-    "is_moderated": false
    }
   },
   {
@@ -2184,14 +2793,14 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000075",
-    "completion": "0.00000375",
-    "image": "0.00000075",
-    "audio": "0.00000075",
-    "input_audio_cache": "0.000000075",
+    "prompt": "0.000000825",
+    "completion": "0.000004125",
+    "image": "0.000000825",
+    "audio": "0.000000825",
+    "input_audio_cache": "0.0000000825",
     "web_search": "0.014",
-    "internal_reasoning": "0.00000375",
-    "input_cache_read": "0.000000075",
+    "internal_reasoning": "0.000004125",
+    "input_cache_read": "0.0000000825",
     "input_cache_write": "0.0000000416666666666667"
    },
    "top_provider": {
@@ -2345,9 +2954,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000007506",
-    "completion": "0.0000022509",
-    "input_cache_read": "0.0000000378",
+    "prompt": "0.000000834",
+    "completion": "0.000002501",
+    "input_cache_read": "0.000000042",
     "overrides": [
      {
       "utc_start": 0,
@@ -2372,33 +2981,6 @@
    }
   },
   {
-   "id": "inclusionai/ling-3.0-flash-fin",
-   "name": "inclusionAI: Ling 3.0 Flash Fin",
-   "created": 1787846290,
-   "context_length": 262144,
-   "architecture": {
-    "modality": "text->text",
-    "input_modalities": [
-     "text"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Other",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.000000042",
-    "completion": "0.0000001232",
-    "input_cache_read": "0.0000000084"
-   },
-   "top_provider": {
-    "context_length": 262144,
-    "max_completion_tokens": 32768,
-    "is_moderated": false
-   }
-  },
-  {
    "id": "~z-ai/glm-flash-latest",
    "name": "Z.ai: GLM Flash Latest",
    "created": 1787817633,
@@ -2417,9 +2999,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000004",
-    "completion": "0.0000005",
-    "input_cache_read": "0.0000000125"
+    "prompt": "0.0000000492",
+    "completion": "0.0000000788",
+    "input_cache_read": "0.00000003"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -2475,13 +3057,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000015",
-    "completion": "0.0000005",
+    "prompt": "0.0000000492",
+    "completion": "0.0000000788",
     "input_cache_read": "0.00000003"
    },
    "top_provider": {
-    "context_length": 1048575,
-    "max_completion_tokens": 943717,
+    "context_length": 1048576,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -2504,9 +3086,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000006",
-    "completion": "0.0000002",
-    "input_cache_read": "0.000000012"
+    "prompt": "0.00000005",
+    "completion": "0.00000018",
+    "input_cache_read": "0.00000001"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -2642,13 +3224,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000039",
-    "completion": "0.0000048",
-    "input_cache_read": "0.000000038"
+    "prompt": "0.000000075",
+    "completion": "0.000004295",
+    "input_cache_read": "0.000000075"
    },
    "top_provider": {
     "context_length": 1048576,
-    "max_completion_tokens": 943718,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -2695,9 +3277,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000039",
-    "completion": "0.0000048",
-    "input_cache_read": "0.000000038"
+    "prompt": "0.000000079",
+    "completion": "0.0000014",
+    "input_cache_read": "0.000000078"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -2751,14 +3333,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000425",
-    "completion": "0.00000255",
-    "input_cache_read": "0.000000085",
-    "input_cache_write": "0.00000053125"
+    "prompt": "0.0000002",
+    "completion": "0.0000025",
+    "input_cache_read": "0.00000009"
    },
    "top_provider": {
-    "context_length": 1000000,
-    "max_completion_tokens": 131072,
+    "context_length": 262144,
+    "max_completion_tokens": 235929,
     "is_moderated": false
    }
   },
@@ -2913,8 +3494,8 @@
     "input_cache_read": "0.00000025"
    },
    "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 131072,
+    "context_length": 1010000,
+    "max_completion_tokens": 909000,
     "is_moderated": false
    }
   },
@@ -3225,9 +3806,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000009",
-    "completion": "0.00000036",
-    "input_cache_read": "0.000000018"
+    "prompt": "0.00000015",
+    "completion": "0.0000006",
+    "input_cache_read": "0.00000003"
    },
    "top_provider": {
     "context_length": 524288,
@@ -3311,9 +3892,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000018",
-    "completion": "0.00000128",
-    "input_cache_read": "0.000000018"
+    "prompt": "0.0000000422",
+    "completion": "0.0000001694",
+    "input_cache_read": "0.000000028"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -3338,13 +3919,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000018",
-    "completion": "0.00000128",
-    "input_cache_read": "0.000000018"
+    "prompt": "0.00000004444",
+    "completion": "0.00000013332",
+    "input_cache_read": "0.000000001414"
    },
    "top_provider": {
     "context_length": 1048576,
-    "max_completion_tokens": 943718,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -3876,9 +4457,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000005",
-    "completion": "0.0000135",
-    "input_cache_read": "0.00000028"
+    "prompt": "0.000000239",
+    "completion": "0.0000108",
+    "input_cache_read": "0.00000021"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -4277,18 +4858,18 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000002",
-    "completion": "0.00001",
+    "prompt": "0.000004",
+    "completion": "0.00002",
     "web_search": "0.01",
-    "input_cache_read": "0.0000002",
-    "input_cache_write": "0.0000025",
+    "input_cache_read": "0.0000004",
+    "input_cache_write": "0.000005",
     "overrides": [
      {
       "min_prompt_tokens": 272000,
-      "prompt": "0.000004",
-      "completion": "0.000015",
-      "input_cache_read": "0.0000004",
-      "input_cache_write": "0.000005"
+      "prompt": "0.000008",
+      "completion": "0.00003",
+      "input_cache_read": "0.0000008",
+      "input_cache_write": "0.00001"
      }
     ]
    },
@@ -4317,18 +4898,18 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000001",
-    "completion": "0.000005",
+    "prompt": "0.000002",
+    "completion": "0.00001",
     "web_search": "0.01",
-    "input_cache_read": "0.0000001",
-    "input_cache_write": "0.00000125",
+    "input_cache_read": "0.0000002",
+    "input_cache_write": "0.0000025",
     "overrides": [
      {
       "min_prompt_tokens": 272000,
-      "prompt": "0.000002",
-      "completion": "0.0000075",
-      "input_cache_read": "0.0000002",
-      "input_cache_write": "0.0000025"
+      "prompt": "0.000004",
+      "completion": "0.000015",
+      "input_cache_read": "0.0000004",
+      "input_cache_write": "0.000005"
      }
     ]
    },
@@ -4357,18 +4938,18 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000002",
-    "completion": "0.00001",
+    "prompt": "0.000004",
+    "completion": "0.00002",
     "web_search": "0.01",
-    "input_cache_read": "0.0000002",
-    "input_cache_write": "0.0000025",
+    "input_cache_read": "0.0000004",
+    "input_cache_write": "0.000005",
     "overrides": [
      {
       "min_prompt_tokens": 272000,
-      "prompt": "0.000004",
-      "completion": "0.000015",
-      "input_cache_read": "0.0000004",
-      "input_cache_write": "0.000005"
+      "prompt": "0.000008",
+      "completion": "0.00003",
+      "input_cache_read": "0.0000008",
+      "input_cache_write": "0.00001"
      }
     ]
    },
@@ -4397,18 +4978,18 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000001",
-    "completion": "0.000005",
+    "prompt": "0.000002",
+    "completion": "0.00001",
     "web_search": "0.01",
-    "input_cache_read": "0.0000001",
-    "input_cache_write": "0.00000125",
+    "input_cache_read": "0.0000002",
+    "input_cache_write": "0.0000025",
     "overrides": [
      {
       "min_prompt_tokens": 272000,
-      "prompt": "0.000002",
-      "completion": "0.0000075",
-      "input_cache_read": "0.0000002",
-      "input_cache_write": "0.0000025"
+      "prompt": "0.000004",
+      "completion": "0.000015",
+      "input_cache_read": "0.0000004",
+      "input_cache_write": "0.000005"
      }
     ]
    },
@@ -4565,9 +5146,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000000825",
-    "completion": "0.00000033",
-    "input_cache_read": "0.000000020625",
+    "prompt": "0.000000132",
+    "completion": "0.000000528",
+    "input_cache_read": "0.000000033",
     "overrides": [
      {
       "utc_start": 0,
@@ -4884,9 +5465,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000006",
+    "prompt": "0.0000000341",
     "completion": "0.000007",
-    "input_cache_read": "0.000000059"
+    "input_cache_read": "0.000000033"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -4940,7 +5521,7 @@
    "pricing": {
     "prompt": "0.0000006712",
     "completion": "0.00000335",
-    "input_cache_read": "0.00000018"
+    "input_cache_read": "0.00000015"
    },
    "top_provider": {
     "context_length": 262144,
@@ -5115,13 +5696,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000005",
-    "completion": "0.0000022",
-    "input_cache_read": "0.0000001"
+    "prompt": "0.0000006",
+    "completion": "0.0000024",
+    "input_cache_read": "0.00000012"
    },
    "top_provider": {
-    "context_length": 262144,
-    "max_completion_tokens": 16384,
+    "context_length": 202800,
+    "max_completion_tokens": 182520,
     "is_moderated": false
    }
   },
@@ -5185,6 +5766,33 @@
    },
    "top_provider": {
     "context_length": 1000000,
+    "max_completion_tokens": 131072,
+    "is_moderated": false
+   }
+  },
+  {
+   "id": "qwen/qwen3.7-plus:batch",
+   "name": "Qwen: Qwen3.7 Plus (batch)",
+   "created": 1780491783,
+   "context_length": 262144,
+   "architecture": {
+    "modality": "text+image->text",
+    "input_modalities": [
+     "text",
+     "image"
+    ],
+    "output_modalities": [
+     "text"
+    ],
+    "tokenizer": "Qwen",
+    "instruct_type": null
+   },
+   "pricing": {
+    "prompt": "0.00000023",
+    "completion": "0.00000092"
+   },
+   "top_provider": {
+    "context_length": 262144,
     "max_completion_tokens": 131072,
     "is_moderated": false
    }
@@ -5836,28 +6444,18 @@
    },
    "pricing": {
     "prompt": "0.000002",
-    "completion": "0.000012",
+    "completion": "0.00001",
     "image": "0.000002",
     "audio": "0.000002",
-    "input_audio_cache": "0.0000002",
+    "input_audio_cache": "0.0000001",
     "web_search": "0.014",
-    "internal_reasoning": "0.000012",
-    "input_cache_read": "0.0000002",
-    "input_cache_write": "0.000000375",
-    "overrides": [
-     {
-      "min_prompt_tokens": 200000,
-      "prompt": "0.000004",
-      "completion": "0.000018",
-      "audio": "0.000004",
-      "input_audio_cache": "0.0000004",
-      "input_cache_read": "0.0000004"
-     }
-    ]
+    "internal_reasoning": "0.00001",
+    "input_cache_read": "0.0000001",
+    "input_cache_write": "0.0000001875"
    },
    "top_provider": {
     "context_length": 1048576,
-    "max_completion_tokens": 65536,
+    "max_completion_tokens": 943718,
     "is_moderated": false
    }
   },
@@ -5880,9 +6478,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000031",
-    "completion": "0.00001489",
-    "input_cache_read": "0.0000003"
+    "prompt": "0.00000019",
+    "completion": "0.0000077001",
+    "input_cache_read": "0.00000019"
    },
    "top_provider": {
     "context_length": 1048576,
@@ -6052,8 +6650,8 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000015",
-    "completion": "0.000001",
+    "prompt": "0.0000001",
+    "completion": "0.00000095",
     "input_cache_read": "0.00000005"
    },
    "top_provider": {
@@ -6081,12 +6679,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000032",
-    "completion": "0.0000032"
+    "prompt": "0.00000025",
+    "completion": "0.000002",
+    "input_cache_read": "0.000000025"
    },
    "top_provider": {
     "context_length": 262144,
-    "max_completion_tokens": 81920,
+    "max_completion_tokens": 65536,
     "is_moderated": false
    }
   },
@@ -6255,9 +6854,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000002088",
-    "completion": "0.0000004176",
-    "input_cache_read": "0.0000000174"
+    "prompt": "0.000000276834",
+    "completion": "0.000000553668",
+    "input_cache_read": "0.0000000230695"
    },
    "top_provider": {
     "context_length": 1024000,
@@ -6282,13 +6881,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000003",
-    "completion": "0.00000128",
-    "input_cache_read": "0.00000003"
+    "prompt": "0.000000091",
+    "completion": "0.000000182",
+    "input_cache_read": "0.0000000182"
    },
    "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 943718,
+    "context_length": 1048575,
+    "max_completion_tokens": 943717,
     "is_moderated": false
    }
   },
@@ -6336,13 +6935,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000435",
-    "completion": "0.00000087",
-    "input_cache_read": "0.0000000036"
+    "prompt": "0.0000003045",
+    "completion": "0.000000609",
+    "input_cache_read": "0.0000000028"
    },
    "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 131072,
+    "context_length": 1050000,
+    "max_completion_tokens": 945000,
     "is_moderated": false
    }
   },
@@ -6366,13 +6965,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000014",
-    "completion": "0.00000028",
-    "input_cache_read": "0.0000000028"
+    "prompt": "0.000000119",
+    "completion": "0.000000238",
+    "input_cache_read": "0.00000000255"
    },
    "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 131072,
+    "context_length": 1050000,
+    "max_completion_tokens": 945000,
     "is_moderated": false
    }
   },
@@ -6484,9 +7083,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000004357",
-    "completion": "0.00000245",
-    "input_cache_read": "0.0000001081"
+    "prompt": "0.00000065",
+    "completion": "0.00000341",
+    "input_cache_read": "0.00000015"
    },
    "top_provider": {
     "context_length": 262144,
@@ -6575,13 +7174,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000966",
-    "completion": "0.000003036",
-    "input_cache_read": "0.0000001794"
+    "prompt": "0.0000014",
+    "completion": "0.0000044",
+    "input_cache_read": "0.00000026"
    },
    "top_provider": {
-    "context_length": 200000,
-    "max_completion_tokens": 128000,
+    "context_length": 202752,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -6661,9 +7260,8 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000009",
-    "completion": "0.00000034",
-    "input_cache_read": "0.00000005"
+    "prompt": "0.0000002",
+    "completion": "0.0000004"
    },
    "top_provider": {
     "context_length": 262144,
@@ -6969,13 +7567,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000021",
-    "completion": "0.00000084",
-    "input_cache_read": "0.000000042"
+    "prompt": "0.0000003",
+    "completion": "0.0000012",
+    "input_cache_read": "0.00000006"
    },
    "top_provider": {
-    "context_length": 196608,
-    "max_completion_tokens": 176947,
+    "context_length": 204800,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -7199,8 +7797,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000008",
-    "completion": "0.00000045"
+    "prompt": "0.0000003",
+    "completion": "0.0000024",
+    "input_cache_read": "0.00000015"
    },
    "top_provider": {
     "context_length": 262144,
@@ -7288,12 +7887,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000001",
-    "completion": "0.00000015"
+    "prompt": "0.00000017",
+    "completion": "0.00000025"
    },
    "top_provider": {
-    "context_length": 256000,
-    "max_completion_tokens": 32768,
+    "context_length": 262144,
+    "max_completion_tokens": 235929,
     "is_moderated": false
    }
   },
@@ -7593,13 +8192,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000008",
-    "completion": "0.00000075",
-    "input_cache_read": "0.00000004"
+    "prompt": "0.00000014",
+    "completion": "0.000001",
+    "input_cache_read": "0.00000005"
    },
    "top_provider": {
     "context_length": 262144,
-    "max_completion_tokens": 32768,
+    "max_completion_tokens": 81920,
     "is_moderated": false
    }
   },
@@ -7622,12 +8221,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000026",
-    "completion": "0.0000026"
+    "prompt": "0.00000027",
+    "completion": "0.00000216",
+    "input_cache_read": "0.00000027"
    },
    "top_provider": {
     "context_length": 262144,
-    "max_completion_tokens": 81920,
+    "max_completion_tokens": 65536,
     "is_moderated": false
    }
   },
@@ -7650,8 +8250,8 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000026",
-    "completion": "0.00000208"
+    "prompt": "0.0000004",
+    "completion": "0.0000032"
    },
    "top_provider": {
     "context_length": 262144,
@@ -7998,9 +8598,9 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000055",
-    "completion": "0.0000035",
-    "input_cache_read": "0.000000225"
+    "prompt": "0.0000005",
+    "completion": "0.0000036",
+    "input_cache_read": "0.0000003"
    },
    "top_provider": {
     "context_length": 262144,
@@ -8025,13 +8625,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000027",
-    "completion": "0.00000108",
-    "input_cache_read": "0.000000027"
+    "prompt": "0.0000003",
+    "completion": "0.0000012",
+    "input_cache_read": "0.00000003"
    },
    "top_provider": {
-    "context_length": 200000,
-    "max_completion_tokens": 128000,
+    "context_length": 204800,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -8052,13 +8652,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000006",
-    "completion": "0.00000192",
-    "input_cache_read": "0.00000012"
+    "prompt": "0.000001",
+    "completion": "0.0000032",
+    "input_cache_read": "0.0000002"
    },
    "top_provider": {
-    "context_length": 198000,
-    "max_completion_tokens": 128000,
+    "context_length": 202752,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -8543,12 +9143,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000006",
-    "completion": "0.0000022",
-    "input_cache_read": "0.00000011"
+    "prompt": "0.00000054",
+    "completion": "0.00000198",
+    "input_cache_read": "0.000000099"
    },
    "top_provider": {
-    "context_length": 202752,
+    "context_length": 204800,
     "max_completion_tokens": 131072,
     "is_moderated": false
    }
@@ -9152,13 +9752,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000259",
-    "completion": "0.0000008",
-    "input_cache_read": "0.00000014"
+    "prompt": "0.00000028",
+    "completion": "0.00000042",
+    "input_cache_read": "0.000000028"
    },
    "top_provider": {
-    "context_length": 163840,
-    "max_completion_tokens": 147456,
+    "context_length": 131072,
+    "max_completion_tokens": 65536,
     "is_moderated": false
    }
   },
@@ -9537,12 +10137,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000003",
-    "completion": "0.0000012"
+    "prompt": "0.000000255",
+    "completion": "0.00000102"
    },
    "top_provider": {
-    "context_length": 196608,
-    "max_completion_tokens": 176947,
+    "context_length": 204800,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -9893,12 +10493,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000005",
-    "completion": "0.000002",
-    "input_cache_read": "0.0000001"
+    "prompt": "0.00000055",
+    "completion": "0.0000022",
+    "input_cache_read": "0.00000011"
    },
    "top_provider": {
-    "context_length": 202752,
+    "context_length": 204800,
     "max_completion_tokens": 131072,
     "is_moderated": false
    }
@@ -10207,13 +10807,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000001",
-    "completion": "0.0000011",
-    "input_cache_read": "0.00000007"
+    "prompt": "0.00000009",
+    "completion": "0.0000011"
    },
    "top_provider": {
     "context_length": 262144,
-    "max_completion_tokens": 235929,
+    "max_completion_tokens": 16384,
     "is_moderated": false
    }
   },
@@ -10579,12 +11178,13 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.000000037",
-    "completion": "0.00000017"
+    "prompt": "0.00000015",
+    "completion": "0.0000006",
+    "input_cache_read": "0.000000075"
    },
    "top_provider": {
     "context_length": 131072,
-    "max_completion_tokens": 117964,
+    "max_completion_tokens": 65536,
     "is_moderated": false
    }
   },
@@ -10830,7 +11430,7 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.0000001",
+    "prompt": "0.00000009",
     "completion": "0.0000003"
    },
    "top_provider": {
@@ -11012,42 +11612,6 @@
    }
   },
   {
-   "id": "google/gemini-2.5-flash-lite:batch",
-   "name": "Google: Gemini 2.5 Flash Lite (batch)",
-   "created": 1753200276,
-   "context_length": 1048576,
-   "architecture": {
-    "modality": "text+image+file+audio+video->text",
-    "input_modalities": [
-     "text",
-     "image",
-     "file",
-     "audio",
-     "video"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Gemini",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.00000005",
-    "completion": "0.0000002",
-    "image": "0.00000005",
-    "audio": "0.00000015",
-    "input_audio_cache": "0.00000003",
-    "web_search": "0.014",
-    "internal_reasoning": "0.0000002",
-    "input_cache_read": "0.00000001"
-   },
-   "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 65535,
-    "is_moderated": false
-   }
-  },
-  {
    "id": "qwen/qwen3-235b-a22b-2507",
    "name": "Qwen: Qwen3 235B A22B Instruct 2507",
    "created": 1753119555,
@@ -11181,7 +11745,7 @@
    "id": "morph/morph-v3-fast",
    "name": "Morph: Morph V3 Fast",
    "created": 1751910002,
-   "context_length": 81920,
+   "context_length": 262144,
    "architecture": {
     "modality": "text->text",
     "input_modalities": [
@@ -11198,8 +11762,8 @@
     "completion": "0.0000012"
    },
    "top_provider": {
-    "context_length": 81920,
-    "max_completion_tokens": 38000,
+    "context_length": 262144,
+    "max_completion_tokens": 131072,
     "is_moderated": false
    }
   },
@@ -11221,11 +11785,11 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000009375",
-    "completion": "0.00000025"
+    "prompt": "0.000000075",
+    "completion": "0.0000002"
    },
    "top_provider": {
-    "context_length": 256000,
+    "context_length": 128000,
     "max_completion_tokens": 16384,
     "is_moderated": false
    }
@@ -11294,42 +11858,6 @@
    }
   },
   {
-   "id": "google/gemini-2.5-flash:batch",
-   "name": "Google: Gemini 2.5 Flash (batch)",
-   "created": 1750172488,
-   "context_length": 1048576,
-   "architecture": {
-    "modality": "text+image+file+audio+video->text",
-    "input_modalities": [
-     "file",
-     "image",
-     "text",
-     "audio",
-     "video"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Gemini",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.00000015",
-    "completion": "0.00000125",
-    "image": "0.00000015",
-    "audio": "0.0000005",
-    "input_audio_cache": "0.0000001",
-    "web_search": "0.014",
-    "internal_reasoning": "0.00000125",
-    "input_cache_read": "0.00000003"
-   },
-   "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 65535,
-    "is_moderated": false
-   }
-  },
-  {
    "id": "google/gemini-2.5-pro",
    "name": "Google: Gemini 2.5 Pro",
    "created": 1750169544,
@@ -11365,52 +11893,6 @@
       "prompt": "0.0000025",
       "completion": "0.000015",
       "audio": "0.0000025",
-      "input_audio_cache": "0.00000025",
-      "input_cache_read": "0.00000025"
-     }
-    ]
-   },
-   "top_provider": {
-    "context_length": 1048576,
-    "max_completion_tokens": 65536,
-    "is_moderated": false
-   }
-  },
-  {
-   "id": "google/gemini-2.5-pro:batch",
-   "name": "Google: Gemini 2.5 Pro (batch)",
-   "created": 1750169544,
-   "context_length": 1048576,
-   "architecture": {
-    "modality": "text+image+file+audio+video->text",
-    "input_modalities": [
-     "text",
-     "image",
-     "file",
-     "audio",
-     "video"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Gemini",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.000000625",
-    "completion": "0.000005",
-    "image": "0.000000625",
-    "audio": "0.000000625",
-    "input_audio_cache": "0.000000125",
-    "web_search": "0.014",
-    "internal_reasoning": "0.000005",
-    "input_cache_read": "0.000000125",
-    "overrides": [
-     {
-      "min_prompt_tokens": 200000,
-      "prompt": "0.00000125",
-      "completion": "0.0000075",
-      "audio": "0.00000125",
       "input_audio_cache": "0.00000025",
       "input_cache_read": "0.00000025"
      }
@@ -11522,48 +12004,6 @@
     "context_length": 163840,
     "max_completion_tokens": 32768,
     "is_moderated": false
-   }
-  },
-  {
-   "id": "anthropic/claude-sonnet-4",
-   "name": "Anthropic: Claude Sonnet 4",
-   "created": 1747930371,
-   "context_length": 200000,
-   "architecture": {
-    "modality": "text+image+file->text",
-    "input_modalities": [
-     "image",
-     "text",
-     "file"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Claude",
-    "instruct_type": null
-   },
-   "pricing": {
-    "prompt": "0.000003",
-    "completion": "0.000015",
-    "web_search": "0.01",
-    "input_cache_read": "0.0000003",
-    "input_cache_write": "0.00000375",
-    "input_cache_write_1h": "0.000006",
-    "overrides": [
-     {
-      "min_prompt_tokens": 200000,
-      "prompt": "0.000006",
-      "completion": "0.0000225",
-      "input_cache_read": "0.0000006",
-      "input_cache_write": "0.0000075",
-      "input_cache_write_1h": "0.000012"
-     }
-    ]
-   },
-   "top_provider": {
-    "context_length": 200000,
-    "max_completion_tokens": 64000,
-    "is_moderated": true
    }
   },
   {
@@ -12034,7 +12474,7 @@
    "id": "meta-llama/llama-4-maverick",
    "name": "Meta: Llama 4 Maverick",
    "created": 1743881822,
-   "context_length": 1048576,
+   "context_length": 524288,
    "architecture": {
     "modality": "text+image->text",
     "input_modalities": [
@@ -12186,12 +12626,13 @@
     "instruct_type": "gemma"
    },
    "pricing": {
-    "prompt": "0.00000005",
-    "completion": "0.0000001"
+    "prompt": "0.00000004",
+    "completion": "0.00000005",
+    "input_cache_read": "0.00000002"
    },
    "top_provider": {
     "context_length": 131072,
-    "max_completion_tokens": 16384,
+    "max_completion_tokens": 117964,
     "is_moderated": false
    }
   },
@@ -12293,7 +12734,7 @@
    },
    "pricing": {
     "prompt": "0.00000008",
-    "completion": "0.00000045",
+    "completion": "0.00000035",
     "input_cache_read": "0.00000004"
    },
    "top_provider": {
@@ -12674,32 +13115,6 @@
    }
   },
   {
-   "id": "deepseek/deepseek-r1",
-   "name": "DeepSeek: R1",
-   "created": 1737381095,
-   "context_length": 64000,
-   "architecture": {
-    "modality": "text->text",
-    "input_modalities": [
-     "text"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "DeepSeek",
-    "instruct_type": "deepseek-r1"
-   },
-   "pricing": {
-    "prompt": "0.0000007",
-    "completion": "0.0000025"
-   },
-   "top_provider": {
-    "context_length": 64000,
-    "max_completion_tokens": 16000,
-    "is_moderated": false
-   }
-  },
-  {
    "id": "minimax/minimax-01",
    "name": "MiniMax: MiniMax-01",
    "created": 1736915462,
@@ -12769,38 +13184,12 @@
     "instruct_type": null
    },
    "pricing": {
-    "prompt": "0.00000032",
-    "completion": "0.00000089"
+    "prompt": "0.0000002574",
+    "completion": "0.0000010287"
    },
    "top_provider": {
-    "context_length": 163840,
-    "max_completion_tokens": 16384,
-    "is_moderated": false
-   }
-  },
-  {
-   "id": "sao10k/l3.3-euryale-70b",
-   "name": "Sao10K: Llama 3.3 Euryale 70B",
-   "created": 1734535928,
-   "context_length": 131072,
-   "architecture": {
-    "modality": "text->text",
-    "input_modalities": [
-     "text"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Llama3",
-    "instruct_type": "llama3"
-   },
-   "pricing": {
-    "prompt": "0.00000065",
-    "completion": "0.00000075"
-   },
-   "top_provider": {
-    "context_length": 131072,
-    "max_completion_tokens": 16384,
+    "context_length": 128000,
+    "max_completion_tokens": 16000,
     "is_moderated": false
    }
   },
@@ -12877,9 +13266,8 @@
     "instruct_type": "llama3"
    },
    "pricing": {
-    "prompt": "0.00000022",
-    "completion": "0.0000005",
-    "input_cache_read": "0.00000011"
+    "prompt": "0.0000001",
+    "completion": "0.00000032"
    },
    "top_provider": {
     "context_length": 131072,
@@ -13171,12 +13559,12 @@
     "instruct_type": "llama3"
    },
    "pricing": {
-    "prompt": "0.00000005",
-    "completion": "0.00000033"
+    "prompt": "0.0000000509",
+    "completion": "0.000000335"
    },
    "top_provider": {
-    "context_length": 131072,
-    "max_completion_tokens": 117964,
+    "context_length": 80000,
+    "max_completion_tokens": 72000,
     "is_moderated": false
    }
   },
@@ -13700,32 +14088,6 @@
    }
   },
   {
-   "id": "microsoft/wizardlm-2-8x22b",
-   "name": "WizardLM-2 8x22B",
-   "created": 1713225600,
-   "context_length": 65535,
-   "architecture": {
-    "modality": "text->text",
-    "input_modalities": [
-     "text"
-    ],
-    "output_modalities": [
-     "text"
-    ],
-    "tokenizer": "Mistral",
-    "instruct_type": "vicuna"
-   },
-   "pricing": {
-    "prompt": "0.00000062",
-    "completion": "0.00000062"
-   },
-   "top_provider": {
-    "context_length": 65535,
-    "max_completion_tokens": 8000,
-    "is_moderated": false
-   }
-  },
-  {
    "id": "openai/gpt-4-turbo",
    "name": "OpenAI: GPT-4 Turbo",
    "created": 1712620800,
@@ -13914,7 +14276,7 @@
    "top_provider": {
     "context_length": 16385,
     "max_completion_tokens": 4096,
-    "is_moderated": true
+    "is_moderated": false
    }
   },
   {
