@@ -93,7 +93,7 @@ describe('ChatInput AutoExpand', () => {
     it('should adjust height on resize events', () => {
         // Mock ResizeObserver
         let resizeCallback;
-        const resizeObserverMock = vi.fn((callback) => {
+        const resizeObserverMock = vi.fn(function (callback) {
             resizeCallback = callback;
             return {
                 observe: vi.fn(),
