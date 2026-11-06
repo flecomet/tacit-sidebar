@@ -33,6 +33,12 @@ describe('loadPriceCatalog', () => {
 
     it('times out after 5 s and retries on the next call', async () => {
         vi.useFakeTimers();
+        // The native timeout uses a timer that Vitest cannot advance.
+        const timeout = vi.spyOn(AbortSignal, 'timeout').mockImplementation(ms => {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
+        });
         try {
             fetch.mockImplementationOnce((url, { signal }) => new Promise((_, reject) => {
                 signal.addEventListener('abort', () => reject(new Error('aborted')));
@@ -45,6 +51,7 @@ describe('loadPriceCatalog', () => {
             await expect(loadPriceCatalog(1)).resolves.toBeInstanceOf(Map);
             expect(fetch).toHaveBeenCalledTimes(2);
         } finally {
+            timeout.mockRestore();
             vi.useRealTimers();
         }
     });
