@@ -492,6 +492,23 @@
    "thinking": true
   },
   {
+   "name": "models/gemini-omni-1.2-flash",
+   "version": "001",
+   "displayName": "Gemini Omni 1.2 Flash",
+   "description": "Gemini Omni 1.2 Flash",
+   "inputTokenLimit": 131072,
+   "outputTokenLimit": 65536,
+   "supportedGenerationMethods": [
+    "generateContent",
+    "countTokens"
+   ],
+   "temperature": 1,
+   "topP": 0.95,
+   "topK": 64,
+   "maxTemperature": 2,
+   "thinking": true
+  },
+  {
    "name": "models/gemini-3.5-transcribe",
    "version": "3.5-transcribe-08-2026",
    "displayName": "Gemini 3.5 Transcribe",
@@ -556,6 +573,78 @@
     "generateContent",
     "countTokens",
     "createCachedContent",
+    "batchGenerateContent"
+   ],
+   "temperature": 1,
+   "topP": 0.95,
+   "topK": 64,
+   "maxTemperature": 2,
+   "thinking": true
+  },
+  {
+   "name": "models/gemini-4-argon",
+   "version": "3.0",
+   "displayName": "Gemini 4 Argon",
+   "description": "Gemini 4 Argon",
+   "inputTokenLimit": 1048576,
+   "outputTokenLimit": 32768,
+   "supportedGenerationMethods": [
+    "generateContent",
+    "countTokens",
+    "batchGenerateContent"
+   ],
+   "temperature": 1,
+   "topP": 0.95,
+   "topK": 64,
+   "maxTemperature": 2,
+   "thinking": true
+  },
+  {
+   "name": "models/gemini-4-carbon",
+   "version": "3.0",
+   "displayName": "Gemini 4 Carbon",
+   "description": "Gemini 4 Carbon",
+   "inputTokenLimit": 1048576,
+   "outputTokenLimit": 32768,
+   "supportedGenerationMethods": [
+    "generateContent",
+    "countTokens",
+    "batchGenerateContent"
+   ],
+   "temperature": 1,
+   "topP": 0.95,
+   "topK": 64,
+   "maxTemperature": 2,
+   "thinking": true
+  },
+  {
+   "name": "models/gemini-4-hydrogen",
+   "version": "3.0",
+   "displayName": "Gemini 4 Hydrogen",
+   "description": "Gemini 4 Hydrogen",
+   "inputTokenLimit": 1048576,
+   "outputTokenLimit": 65536,
+   "supportedGenerationMethods": [
+    "generateContent",
+    "countTokens",
+    "batchGenerateContent"
+   ],
+   "temperature": 1,
+   "topP": 0.95,
+   "topK": 64,
+   "maxTemperature": 2,
+   "thinking": true
+  },
+  {
+   "name": "models/gemini-4-neon",
+   "version": "3.0",
+   "displayName": "Gemini 4 Neon",
+   "description": "Gemini 4 Neon",
+   "inputTokenLimit": 1048576,
+   "outputTokenLimit": 65536,
+   "supportedGenerationMethods": [
+    "generateContent",
+    "countTokens",
     "batchGenerateContent"
    ],
    "temperature": 1,
@@ -740,7 +829,7 @@
    "version": "deepthink-exp-05-20",
    "displayName": "Deep Research Max Preview (Apr-21-2026)",
    "description": "Preview release (April 21st, 2026) of Deep Research Max",
-   "inputTokenLimit": 131072,
+   "inputTokenLimit": 1048576,
    "outputTokenLimit": 65536,
    "supportedGenerationMethods": [
     "generateContent",
@@ -757,24 +846,7 @@
    "version": "deepthink-exp-05-20",
    "displayName": "Deep Research Preview (Apr-21-2026)",
    "description": "Preview release (April 21th, 2026) of Deep Research",
-   "inputTokenLimit": 131072,
-   "outputTokenLimit": 65536,
-   "supportedGenerationMethods": [
-    "generateContent",
-    "countTokens"
-   ],
-   "temperature": 1,
-   "topP": 0.95,
-   "topK": 64,
-   "maxTemperature": 2,
-   "thinking": true
-  },
-  {
-   "name": "models/deep-research-pro-preview-12-2025",
-   "version": "deepthink-exp-05-20",
-   "displayName": "Deep Research Pro Preview (Dec-12-2025)",
-   "description": "Preview release (December 12th, 2025) of Deep Research Pro",
-   "inputTokenLimit": 131072,
+   "inputTokenLimit": 1048576,
    "outputTokenLimit": 65536,
    "supportedGenerationMethods": [
     "generateContent",
@@ -841,39 +913,6 @@
    "temperature": 0.2,
    "topP": 1,
    "topK": 40
-  },
-  {
-   "name": "models/veo-3.1-generate-preview",
-   "version": "3.1",
-   "displayName": "Veo 3.1",
-   "description": "Veo 3.1",
-   "inputTokenLimit": 480,
-   "outputTokenLimit": 8192,
-   "supportedGenerationMethods": [
-    "predictLongRunning"
-   ]
-  },
-  {
-   "name": "models/veo-3.1-fast-generate-preview",
-   "version": "3.1",
-   "displayName": "Veo 3.1 fast",
-   "description": "Veo 3.1 fast",
-   "inputTokenLimit": 480,
-   "outputTokenLimit": 8192,
-   "supportedGenerationMethods": [
-    "predictLongRunning"
-   ]
-  },
-  {
-   "name": "models/veo-3.1-lite-generate-preview",
-   "version": "3.1",
-   "displayName": "Veo 3.1 lite",
-   "description": "Veo 3.1 lite",
-   "inputTokenLimit": 480,
-   "outputTokenLimit": 8192,
-   "supportedGenerationMethods": [
-    "predictLongRunning"
-   ]
   },
   {
    "name": "models/gemini-3.5-transcribe-live",
@@ -988,6 +1027,17 @@
    "thinking": true
   },
   {
+   "name": "models/genie-4",
+   "version": "001",
+   "displayName": "Genie 4",
+   "description": "Real-time audio-video generation model",
+   "inputTokenLimit": 1048576,
+   "outputTokenLimit": 65536,
+   "supportedGenerationMethods": [
+    "bidiGenerateContent"
+   ]
+  },
+  {
    "name": "models/gemini-robotics-er-2-streaming-preview",
    "version": "2-streaming-preview",
    "displayName": "Gemini Robotics-ER 2 Streaming Preview",
@@ -1026,6 +1076,17 @@
    "outputTokenLimit": 65536,
    "supportedGenerationMethods": [
     "bidiGenerateMusic"
+   ]
+  },
+  {
+   "name": "models/gemini-decision-1",
+   "version": "gemini-decision-1",
+   "displayName": "Gemini Decision 1",
+   "description": "Gemini Decision 1",
+   "inputTokenLimit": 262144,
+   "outputTokenLimit": 1,
+   "supportedGenerationMethods": [
+    "createDecision"
    ]
   }
  ]
